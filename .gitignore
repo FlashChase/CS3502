@@ -4,6 +4,9 @@
 hello
 employee
 logwriter
+producer
+consumer
+bidirectional
 
 # Log files
 *.log
