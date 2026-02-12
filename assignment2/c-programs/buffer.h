@@ -1,4 +1,8 @@
-/ ============================================
+// Chase Connell
+// CS3502
+// Section W03
+
+// ============================================
 // buffer.h - Shared definitions (INCOMPLETE - You must complete this!)
 // ============================================
 #ifndef BUFFER_H
@@ -28,11 +32,22 @@
 //   - The data value
 //   - Which producer created it
 //   - Any other fields you think are necessary
+typedef struct {
+	int value;
+	int producer_id;
+} item_t;
+
 
 // TODO: Define the shared buffer structure (shared_buffer_t)
 // The buffer should contain:
 //   - An array of items
 //   - Variables to track the buffer state
 //   - Any other fields needed for synchronization
+typedef struct {
+	item_t buffer[BUFFER_SIZE];
+	int head;
+	int tail;
+} shared_buffer_t;
 
 #endif
+

@@ -1,3 +1,7 @@
+// Chase Connell
+// CS3502
+// Section W03
+
 // ============================================
 // consumer.c - Consumer process starter
 // ============================================
@@ -45,23 +49,41 @@ int main(int argc, char* argv[]) {
     srand(time(NULL) + consumer_id * 100);
     
     // TODO: Attach to shared memory
-    
+    int shm_id = shmget(SHM_KEY, sizeof(shared_buffer_t), IPC_CREAT | 0666);
+    if (shm_id == -1) {
+	perror("shmeget failed in consumer");
+	exit(1);
+    }
+
+    buffer = shmat(shm_id, NULL, 0);
+
     // TODO: Open semaphores (don't use O_CREAT - producer creates them)
-    
+    full = sem_open("/full_sem", 0);
+    empty = sem_open("/empty_sem", 0);
+    mutex = sem_open("/mutex_sem", 0);
+
     printf("Consumer %d: Starting to consume %d items\n", consumer_id, num_items);
     
     // TODO: Main consumption loop
     for (int i = 0; i < num_items; i++) {
+
         // TODO: Wait for full slot
-        
+        sem_wait(full);
+
         // TODO: Enter critical section
-        
+        sem_wait(mutex);
+
         // TODO: Remove item from buffer
-        
+        item_t collected_item = buffer->buffer[buffer->tail];	// Pointer to tail of buffer and variable equal to it
+
+	printf("Consumer %d: Consumed value %d from Producer %d\n", consumer_id, collected_item.value, collected_item.producer_id);
+
+	buffer->tail = (buffer->tail + 1) % BUFFER_SIZE;	// Move the tail of buffer to the next item (Or wrap around if necessary)
+
         // TODO: Exit critical section
-        
+        sem_post(mutex); 
         // TODO: Signal empty slot
-        
+        sem_post(empty);
         // Simulate consumption time
         usleep(rand() % 100000);
     }
