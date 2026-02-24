@@ -90,7 +90,7 @@ void* teller_thread(void* arg) {
 		// YOUR CODE HERE - call withdrawal_unsafe
 		withdrawal_unsafe(account_idx2 , amount) ;		// Call withdrawal method
 		printf ("Teller %d: Withdrew $%.2f to Account %d \n" ,	// Print withdrawal info
-			teller_id , amount , account_idx);
+			teller_id , amount , account_idx2);
 
 	} // End for loop
 
