@@ -11,8 +11,8 @@
 # include <stdbool.h>
 
 // Configuration - experiment with different values !
-# define NUM_ACCOUNTS 4
-# define NUM_THREADS 8
+# define NUM_ACCOUNTS 2
+# define NUM_THREADS 4
 # define TRANSACTIONS_PER_THREAD 10
 # define INITIAL_BALANCE 1000.0
 
@@ -27,9 +27,6 @@ typedef struct {
 
 // Global shared array - THIS CAUSES RACE CONDITIONS !
 Account accounts[NUM_ACCOUNTS];
-
-
-int method = 9;
 
 /* STRATEGY 1: Lock Ordering ( RECOMMENDED )
 *
@@ -56,28 +53,27 @@ int method = 9;
 // Hint : int first = ( from < to ) ? from : to ;
 void safe_transfer_ordered ( int from_id, int to_id, double amount, int teller_id ) {
 
+	int first  = (from_id < to_id) ? from_id : to_id;	// Set first to lower id
+	int second = (from_id < to_id) ? to_id : from_id;	// Set second to lower id
+	bool same_id = (from_id == to_id);			// Mark same id if same accounts
 
-	int first  = (from_id < to_id) ? from_id : to_id;
-	int second = (from_id < to_id) ? to_id : from_id;
-	bool same_id = (from_id == to_id);
-
-	pthread_mutex_lock(&accounts[first].lock);
-	if (!same_id)
+	pthread_mutex_lock(&accounts[first].lock);		// Lock the first mutex
+	if (!same_id)						// If not the same ID's
 	{
-		pthread_mutex_lock(&accounts[second].lock);
-	}
+		pthread_mutex_lock(&accounts[second].lock);	// Lock the second mutex
+	}							// Enter critical section
 
-	// Check for insufficient funds. Release locks and print error message if true
-        if ( (accounts[from_id].balance - amount) < 0)
+	// Complete transactions
+        if ( (accounts[from_id].balance - amount) < 0)	// If funds are insufficient
         {
-		if (!same_id)
+		if (!same_id)	// If ID's are the not the same
 		{
                 	pthread_mutex_unlock(&accounts[second].lock);  // Release second lock
 		}
 
                 pthread_mutex_unlock(&accounts[first].lock);  // Release first lock
 
-
+		// Output insufficient funds message after releasing locks to decrease time in critical section
                 printf("Teller %d: Transaction cancelled: Insufficient funds to withdraw $%.2f from account %d\n",
                          teller_id, amount, from_id);
         }
@@ -87,19 +83,20 @@ void safe_transfer_ordered ( int from_id, int to_id, double amount, int teller_i
                 accounts[to_id].balance += amount;      // Add amount to second account
 
                 accounts[from_id].transaction_count++;  // Increment transaction counters
-                accounts[to_id].transaction_count++;
+                accounts[to_id].transaction_count++;	// Increment transaction counters
 
-		if (!same_id) 
+		if (!same_id) 	// If ID's are not the same
                 {
                         pthread_mutex_unlock(&accounts[second].lock);  // Release second lock
                 }
 
                 pthread_mutex_unlock(&accounts[first].lock);  // Release first lock
 
+		// Output transaction message after releasing locks to decrease time in critical section
                 printf("Teller %d transferred $%.2f from Account %d to Account %d\n",
                 teller_id, amount, from_id, to_id);
         }
-}
+} // End safe_transfer_ordered
 
 /* STRATEGY 2: Timeout Mechanism
 *
@@ -115,7 +112,7 @@ void safe_transfer_ordered ( int from_id, int to_id, double amount, int teller_i
 * REFERENCE : man pthread_mutex_timedlock
 */
 // TODO : Implement safe_transfer_timeout ( from , to , amount )
-void safe_transfer_timeout (int from_id, int to_id, double amount, int teller_id) {
+void safe_transfer_timedlock (int from_id, int to_id, double amount, int teller_id) {
 
 	bool success = false;		// Used for sentinel
 
@@ -124,14 +121,14 @@ void safe_transfer_timeout (int from_id, int to_id, double amount, int teller_id
 	while (!success) {
 
 		// Try to acquire first lock
-		while (!success) {
+		while (1) {	// Repeat until first lock is acquired
 
 			clock_gettime(CLOCK_REALTIME, &abs_timeout);	// Set current time
 			abs_timeout.tv_sec += 2;			// Add 2 seconds
 
 			// Used timedlock to wait 2 seconds for the lock to open
-			if (pthread_mutex_timedlock(&accounts[from_id].lock, &abs_timeout) != 0) {
-				usleep(100);
+			if (pthread_mutex_timedlock(&accounts[from_id].lock, &abs_timeout) != 0) {	// If didn't acquire lock
+				usleep(100);								// Sleep before retry
 			}else {
 				break;	// break out of first loop if the lock is acquired
 			}
@@ -141,10 +138,11 @@ void safe_transfer_timeout (int from_id, int to_id, double amount, int teller_id
 		if (from_id == to_id) { // If same accounts are selected (Only need 1 lock)
 
 			// Check for insufficient funds and print message if insufficient
-                        if ( (accounts[from_id].balance - amount) < 0)
+                        if ( (accounts[from_id].balance - amount) < 0)		// If funds are insufficient
                         {
 				pthread_mutex_unlock(&accounts[from_id].lock);	// Release lock to end critical section
 
+				// Print insufficient funds message after unlocking mutex to decrease time in critical section
                                 printf("Teller %d: Transaction cancelled: Insufficient funds to withdraw $%.2f from account %d\n",
                                          teller_id, amount, from_id);
                         }
@@ -158,33 +156,34 @@ void safe_transfer_timeout (int from_id, int to_id, double amount, int teller_id
 
                                 pthread_mutex_unlock(&accounts[from_id].lock);  // release lock to end critical section
 
+				// Print transaction message after releasing mutex to decrease time in critical section
                                 printf("Teller %d transferred $%.2f from Account %d to Account %d\n",
                                         teller_id, amount, from_id, to_id);
                         }
 
-			success = true;		// Set sentinel flag
+			success = true;		// Set sentinel flag to end loop and  method
 		}
-		else
+		else	// If two different accounts
 		{
 			// Try to get second mutex
-			clock_gettime(CLOCK_REALTIME, &abs_timeout);
-			abs_timeout.tv_sec += 2;
+			clock_gettime(CLOCK_REALTIME, &abs_timeout);	// Set abs_timeout to the current time
+			abs_timeout.tv_sec += 2;			// Add two seconds to it
 
 			if (pthread_mutex_timedlock(&accounts[to_id].lock, &abs_timeout) != 0)	// if failed to get mutex
 			{
-				pthread_mutex_unlock(&accounts[from_id].lock);		// Release first mutex if failed to get second
+				pthread_mutex_unlock(&accounts[from_id].lock);		// Release first mutex if
 				usleep(100);						// Sleep to give time for another thread to grab first mutex
 			}
 			else	// If have both mutexes
 			{
-				// Check for insufficient funds. Release locks and print error message if true
-                                if ( (accounts[from_id].balance - amount) < 0)
+				// Complete transactions
+                                if ( (accounts[from_id].balance - amount) < 0)		// If funds are insufficient
                                 {
 
 					pthread_mutex_unlock(&accounts[to_id].lock);    // Release second lock
 	                                pthread_mutex_unlock(&accounts[from_id].lock);  // Release first lock
 
-
+					// Print insufficient funds message after unlocking mutex to decrease time in critical section
                                         printf("Teller %d: Transaction cancelled: Insufficient funds to withdraw $%.2f from account %d\n",
                                                  teller_id, amount, from_id);
                                 }
@@ -199,14 +198,15 @@ void safe_transfer_timeout (int from_id, int to_id, double amount, int teller_id
 					pthread_mutex_unlock(&accounts[to_id].lock);	// Release second lock
 					pthread_mutex_unlock(&accounts[from_id].lock);	// Release first lock
 
+					// Print transaction message after releasing mutex to decrease time in critical section
 					printf("Teller %d transferred $%.2f from Account %d to Account %d\n",
                                         teller_id, amount, from_id, to_id);
 
 				}
-				success = true;					// Flag Sentinel
+
+				success = true;	// Flag Sentinel to end loop and method
 			}
 		}
-
 	}
 }
 
@@ -230,24 +230,30 @@ void safe_transfer_trylock(int from_id, int to_id, double amount, int teller_id)
 	while (!success) {
 
 		// Take first mutex lock
-		while (1) {
-			if (pthread_mutex_trylock(&accounts[from_id].lock) != 0) {
-				unsigned int seed = (time(NULL) ^ pthread_self()) % 200;
-				usleep(rand_r(&seed));
-			}else {
-				break; // Break out of loop when lock is obtained
+		while (1) {	// While haven't obtained the first lock
+
+			if (pthread_mutex_trylock(&accounts[from_id].lock) != 0) {		// If failed to obtain the lock
+				unsigned int seed = (time(NULL) ^ pthread_self());		// Get random seed
+				usleep(rand_r(&seed) % 200);					// Sleep before retry
+			}
+			else									// If lock is obtained
+			{
+				break; 								// Break out of inner loop
 			}
 		}
 
-		if (from_id == to_id) {	// If transferring too and from the same account (for some reason)
+		if (from_id == to_id) {	// If transferring to and from the same account (for some reason)
 
 			// Check for insufficient funds and print message if insufficient
                         if ( (accounts[from_id].balance - amount) < 0)
                         {
+				pthread_mutex_unlock(&accounts[from_id].lock);	// Release lock
+
+				// Print insufficient funds message after unlocking mutex to decrease time in critical section
                                 printf("Teller %d: Transaction cancelled: Insufficient funds to withdraw $%.2f from account %d\n",
                                          teller_id, amount, from_id);
-                                success = true;
-				pthread_mutex_unlock(&accounts[from_id].lock);
+
+                                success = true;	// Flag sentinel and end method
                         }
                         else // If funds are sufficient
                         {
@@ -257,34 +263,40 @@ void safe_transfer_trylock(int from_id, int to_id, double amount, int teller_id)
 				accounts[from_id].transaction_count++;	// Increment transaction count for from account
 				accounts[to_id].transaction_count++;	// Increment transaction count in to_account
 
-				success = true;				// Set flag variable
 				pthread_mutex_unlock(&accounts[from_id].lock);	// release lock
 
+				success = true;				// Set flag variable to end method
+
+				// Print transaction message after releasing mutex to decrease time in critical section
 				printf("Teller %d transferred $%.2f from Account %d to Account %d\n",
 					teller_id, amount, from_id, to_id);
                         }
 
 		}
-		else
+		else	// If transferring between two different accounts
 		{
 			//  Try to take second mutex
-			if (pthread_mutex_trylock(&accounts[to_id].lock) != 0) {
-				// If second mutex is locked, then release the first one
-				pthread_mutex_unlock(&accounts[from_id].lock);
+			if (pthread_mutex_trylock(&accounts[to_id].lock) != 0) {		// If failed to get the second lock
+
+				pthread_mutex_unlock(&accounts[from_id].lock);			// Release the first lock
 
 				 // Give a little time for another thread to grab the mutex (Avoid livelock)
-				unsigned int seed = (time(NULL) ^ pthread_self()) % 200;
-                                usleep(rand_r(&seed));
+				unsigned int seed = (time(NULL) ^ pthread_self());
+                                usleep(rand_r(&seed) % 200);
 
 			}
 			else // If obtained both mutexes
 			{
-				// Check for sufficient funds and print message if true
-				if ( (accounts[from_id].balance - amount) < 0)
+				// Complete transaction
+				if ( (accounts[from_id].balance - amount) < 0)	// If funds are insufficient
 				{
+					pthread_mutex_unlock(&accounts[to_id].lock);	// Release second lock
+	                                pthread_mutex_unlock(&accounts[from_id].lock);	// Release first lock
+        	                        success = true;					// Set flag to end method
+
+					// Print insufficient funds message after unlocking mutex to decrease time in critical section
 					printf("Teller %d: Transaction cancelled: Insufficient funds to withdraw $%.2f from account %d\n",
 						 teller_id, amount, from_id);
-					success = true;
 				}
 				else // If funds are sufficient
 				{
@@ -293,23 +305,20 @@ void safe_transfer_trylock(int from_id, int to_id, double amount, int teller_id)
 
 					accounts[from_id].transaction_count++;	// Increment transaction counters
 					accounts[to_id].transaction_count++;
-				}
 
-				pthread_mutex_unlock(&accounts[from_id].lock);
-				pthread_mutex_unlock(&accounts[to_id].lock);
-				success = true;
+					pthread_mutex_unlock(&accounts[to_id].lock);	// Release second lock
+					pthread_mutex_unlock(&accounts[from_id].lock);	// Release first lock
+
+					success = true;					// Set flag to end method
+
+					// Print transaction message after releasing mutex to decrease time in critical section
+        	                        printf("Teller %d transferred $%.2f from Account %d to Account %d\n",
+	                                        teller_id, amount, from_id, to_id);
+				}
 			}
 		}
-
-		usleep(1000);
 	} // End while loop
 } // End safe_transfer_timeout method
-
-
-// TODO : Create comparison test harness
-// Test all strategies with same workload
-// Measure : success rate , average time , max retry count
-void test_harness
 
 
 void* teller_thread(void* arg) {
@@ -325,24 +334,15 @@ void* teller_thread(void* arg) {
 
 		double amount = rand_r(&seed) % 100 + 1;
 
-		if (method = 1)
-		{
-			safe_transfer_ordered(account_from, account_to, amount, teller_id);
-		}
-		else if (method == 2)
-		{
-			safe_transfer_trylock(account_from, account_to, amount, teller_id);
-		}
-		else
-		{
-			safe_transfer_trylock(account_from, account_to, amount, teller_id);
-		}
+		safe_transfer_ordered(account_from, account_to, amount, teller_id);
+		//safe_transfer_timedlock(account_from, account_to, amount, teller_id);
+		//safe_transfer_trylock(account_from, account_to, amount, teller_id);
 	} // End for loop
 
 	return NULL ;
 } // End teller thread method
 
-
+// Destroy mutexes
 void cleanup_mutexes () {
 	for ( int i = 0; i < NUM_ACCOUNTS; i++) {
 		pthread_mutex_destroy(&accounts[i].lock);
@@ -350,16 +350,15 @@ void cleanup_mutexes () {
 }
 
 //------------MAIN---------------//
-int main (int argc, char *argv[])
+int main ()
 {
-	method = atoi(argv[1]);
+	struct timespec start, end;			// Create two timespec structs
 
-	struct timespec start, end;
-
-	clock_gettime(CLOCK_MONOTONIC , &start);
+	clock_gettime(CLOCK_MONOTONIC , &start);	// Set start equal to current time
 
 	printf ( "=== Phase 4: Deadlock Resolutions Demo ===\n\n" ) ;
 
+	// Initialize accounts
 	for (int i = 0; i < NUM_ACCOUNTS; i++) {
 		accounts[i].account_id = i;
 		accounts[i].balance = INITIAL_BALANCE;
@@ -380,7 +379,7 @@ int main (int argc, char *argv[])
 	double expected_total = INITIAL_BALANCE * NUM_ACCOUNTS;
 
 
-// Create array to hold threads
+	// Create array to hold threads
         pthread_t threads[NUM_THREADS];
 
         // Create int array of thread ids
@@ -401,46 +400,56 @@ int main (int argc, char *argv[])
         // Mark time of when threads were started
         time_t thread_start_time = time(NULL);
 
+	// Counter for finished threads
         int threads_finished_count = 0;
+
+	// Sentinel to tell if all threads are finished
         bool finished = false;
 
+	// Run while all threads aren't finished (or 5 seconds passes)
 	while (!finished) {
+
                 // Cycle through threads. tryjoin unfinished threads. Mark as finished if s>
                 for (int i = 0; i < NUM_THREADS; i++) {
-                        if (threads_finished[i]) {                              // If the t>
+                        if (threads_finished[i]) {                              // If the thread has already been marked finished the skip it
                                 continue;
                         }else {
-                                if (pthread_tryjoin_np(threads[i],NULL) == 0) { // if tryjo>
-                                        threads_finished[i] = 1;                // Mark as >
-                                        threads_finished_count++;               // Incremen>
+                                if (pthread_tryjoin_np(threads[i],NULL) == 0) { // if tryjoin is successful
+                                        threads_finished[i] = 1;                // Mark as finished in array
+                                        threads_finished_count++;               // Increment count of finished threads
                                 }
                         }
                 }
 
-                if (threads_finished_count == NUM_THREADS) {
-                        finished = true;
-                }else {
-                        if (time(NULL) - thread_start_time > 5) {
-                                printf("DEADLOCK DETECTED!\n");
+		// Check if all threads are finished
+                if (threads_finished_count == NUM_THREADS)			// Compare finished thread count to total number of threads
+		{
+                        finished = true;					// Flag all threads finished if true
+                }
+		else								// If all threads are not finished
+		{
+                        if (time(NULL) - thread_start_time > 5)			// Check to see if 5 seconds has passed
+			{
+                                printf("DEADLOCK DETECTED!\n");			// If true, output deadlock detection message
                                 printf("Threads involved: ");
-                                for (int i = 0; i < NUM_THREADS; i++) {
+                                for (int i = 0; i < NUM_THREADS; i++) {		// Cycle through thread array and print their ID if they are not finished
                                         if (threads_finished[i] == 0) {
                                                 printf("Thread %d, ", i);
                                         }
                                 }
-                                printf("\nKilling threads and exiting program\n");
-                                for (int i = 0; i < NUM_THREADS; i++) {
-                                        if (threads_finished[i] == 1) {
+                                printf("\nKilling threads and exiting program\n");	// Output program exit message
+                                for (int i = 0; i < NUM_THREADS; i++) {			// Cycle through threads
+                                        if (threads_finished[i] == 1) {			// Check if finished
                                                 continue;
                                         }else {
-                                                pthread_cancel(threads[i]);
+                                                pthread_cancel(threads[i]);		// Kill them if they are not finished
                                         }
                                 }
-                                cleanup_mutexes();
-				return(1);
+                                cleanup_mutexes();					// Destroy mutexes
+				return(1);						// Exit program with error
                         }
                 }
-        } // End While loop
+        } // End deadlock detection while loop
 
 	// Destroy Mutexes
 	cleanup_mutexes();
@@ -449,6 +458,7 @@ int main (int argc, char *argv[])
 
 	double actual_total = 0.0;
 
+	// Cycle through accounts and get actual total balance
 	for (int i = 0; i < NUM_ACCOUNTS ; i ++) {
 
 		printf ("Account %d : $%.2f (%d transactions ) \n" ,
@@ -456,24 +466,27 @@ int main (int argc, char *argv[])
 		actual_total += accounts[i].balance ;
 	}
 
+	// Output results
 	printf ("\nExpected total: $%.2f \n" , expected_total ) ;
 	printf ("Actual total: $%.2f \n" , actual_total ) ;
 	printf ("Difference: $%.2f \n" , actual_total - expected_total ) ;
 
-
+	// Output Race condition detection message
 	if (actual_total != expected_total) {
-		printf("RACE CONDITION DETECTED!\n");
+		printf("\nRACE CONDITION DETECTED!\n");
 	}
 	else {
-		printf("NO RACE CONDITION DETECTED.\n");
+		printf("\nNO RACE CONDITION DETECTED.\n");
 	}
 
+	// Set end equal to current time
 	clock_gettime(CLOCK_MONOTONIC, &end);
 
-	// Calculate and print program time
+	// Calculate and display elapsed time in seconds
+        // End seconds - Start seconds + {(End nanoseconds - Start nanoseconds) converted to seconds}
 	double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) /1e9;
 
-	printf("Time: %.4f seconds\n", elapsed);
+	printf("\nTime: %.4f seconds\n", elapsed);
 
 	return 0;
 } // End Main

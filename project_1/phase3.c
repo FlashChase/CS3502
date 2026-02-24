@@ -209,7 +209,7 @@ int main () {
 			{
 				printf("\nDEADLOCK DETECTED!\n");			// If true output deadlock detection message
 				printf("Threads involved: ");
-				for (int i = 0; i < NUM_THREADS; i++) {		// Cycle through finished thread and print their ID if they are not finished
+				for (int i = 0; i < NUM_THREADS; i++) {		// Cycle through thread array and print their ID if they are not finished
 					if (threads_finished[i] == 0) {
 						printf("Thread %d, ", i);
 					}
