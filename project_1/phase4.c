@@ -25,6 +25,12 @@ typedef struct {
 	pthread_mutex_t lock; // NEW: Mutex for this account
 } Account ;
 
+// Struct to hold info to pass to threads
+typedef struct {
+	int thread_id;
+	int method;	// Deadlock resolution method
+} thread_info;
+
 // Global shared array - THIS CAUSES RACE CONDITIONS !
 Account accounts[NUM_ACCOUNTS];
 
@@ -322,7 +328,10 @@ void safe_transfer_trylock(int from_id, int to_id, double amount, int teller_id)
 
 
 void* teller_thread(void* arg) {
-	int teller_id = *(int*) arg ; // GIVEN : Extract thread ID
+	thread_info *info = arg ;
+
+	int teller_id = info->thread_id;
+	int method = info->method;
 
 	unsigned int seed = time(NULL)^pthread_self();
 
@@ -334,9 +343,18 @@ void* teller_thread(void* arg) {
 
 		double amount = rand_r(&seed) % 100 + 1;
 
-		safe_transfer_ordered(account_from, account_to, amount, teller_id);
-		//safe_transfer_timedlock(account_from, account_to, amount, teller_id);
-		//safe_transfer_trylock(account_from, account_to, amount, teller_id);
+		if (method == 1)
+		{
+			safe_transfer_ordered(account_from, account_to, amount, teller_id);
+		}
+		else if (method == 2)
+		{
+			safe_transfer_timedlock(account_from, account_to, amount, teller_id);
+		}
+		else
+		{
+			safe_transfer_trylock(account_from, account_to, amount, teller_id);
+		}
 	} // End for loop
 
 	return NULL ;
@@ -350,13 +368,45 @@ void cleanup_mutexes () {
 }
 
 //------------MAIN---------------//
-int main ()
+int main (int argc, char *argv[])
 {
+
+	// Which deadlock resolution method
+	int method;
+
+	if (argc >= 2)	// If there were at least two arguments entered
+	{
+		method = atoi(argv[1]);				// Set method equal to argument 1
+
+		if (method != 1 && method != 2 && method != 3)	// If arg1 is not 1, 2 or 3
+		{
+			method = 1;				// Set it to 1
+		}
+	}
+	else
+	{
+		method = 1;					// Default method to 1
+	}
+
 	struct timespec start, end;			// Create two timespec structs
 
 	clock_gettime(CLOCK_MONOTONIC , &start);	// Set start equal to current time
 
-	printf ( "=== Phase 4: Deadlock Resolutions Demo ===\n\n" ) ;
+	printf ( "=== Phase 4: Deadlock Resolutions Demo ===\n" ) ;
+
+	// Print which method the program will use
+	switch (method)
+	{
+		case 1:
+			printf("Using Lock Ordering\n\n");
+			break;
+		case 2:
+			printf("Using Timed Lock\n\n");
+			break;
+		case 3:
+			printf("Using Try Lock\n\n");
+			break;
+	}
 
 	// Initialize accounts
 	for (int i = 0; i < NUM_ACCOUNTS; i++) {
@@ -382,13 +432,14 @@ int main ()
 	// Create array to hold threads
         pthread_t threads[NUM_THREADS];
 
-        // Create int array of thread ids
-        int thread_ids[NUM_THREADS];
+        // Create array of Thread info structs
+        thread_info threads_struct[NUM_THREADS];
 
         // Create threads
         for (int i = 0; i < NUM_THREADS; i++) {
-                thread_ids[i] = i;
-                pthread_create(&threads[i], NULL, teller_thread, &thread_ids[i]);
+                threads_struct[i].thread_id = i;	// Set the thread id
+		threads_struct[i].method = method;	// Set the method to be used
+                pthread_create(&threads[i], NULL, teller_thread, &threads_struct[i]);	// Create the thread and pass it the struct info
         }
 
         // Create array to keep track of numbers of finished threads
