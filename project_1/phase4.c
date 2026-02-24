@@ -9,12 +9,16 @@
 # include <time.h>
 # include <unistd.h>
 # include <stdbool.h>
+# include <stdatomic.h>
 
 // Configuration - experiment with different values !
 # define NUM_ACCOUNTS 2
 # define NUM_THREADS 4
 # define TRANSACTIONS_PER_THREAD 10
 # define INITIAL_BALANCE 1000.0
+
+atomic_long acquire_attempt = 0;
+atomic_long acquire_success = 0;
 
 
 // Account data structure ( GIVEN )
@@ -62,11 +66,21 @@ void safe_transfer_ordered ( int from_id, int to_id, double amount, int teller_i
 	int first  = (from_id < to_id) ? from_id : to_id;	// Set first to lower id
 	int second = (from_id < to_id) ? to_id : from_id;	// Set second to lower id
 	bool same_id = (from_id == to_id);			// Mark same id if same accounts
+	int lt = -1;						// Used to track success of mutex locks
 
-	pthread_mutex_lock(&accounts[first].lock);		// Lock the first mutex
+	lt = pthread_mutex_lock(&accounts[first].lock);	// Lock the first mutex
+
+	acquire_attempt++;
+
+	if (lt == 0) { acquire_success++; }			// Increment acquire_success
+
+	usleep(50);						// Add a small sleep to try to induce deadlock
+
 	if (!same_id)						// If not the same ID's
 	{
-		pthread_mutex_lock(&accounts[second].lock);	// Lock the second mutex
+		lt = pthread_mutex_lock(&accounts[second].lock);// Lock the second mutex
+		acquire_attempt++;
+		if (lt == 0) { acquire_success++; }		// Increment lock tracker
 	}							// Enter critical section
 
 	// Complete transactions
@@ -130,12 +144,14 @@ void safe_transfer_timedlock (int from_id, int to_id, double amount, int teller_
 		while (1) {	// Repeat until first lock is acquired
 
 			clock_gettime(CLOCK_REALTIME, &abs_timeout);	// Set current time
-			abs_timeout.tv_sec += 2;			// Add 2 seconds
+			abs_timeout.tv_sec += .5;			// Add 2 seconds
 
+			acquire_attempt++;
 			// Used timedlock to wait 2 seconds for the lock to open
 			if (pthread_mutex_timedlock(&accounts[from_id].lock, &abs_timeout) != 0) {	// If didn't acquire lock
 				usleep(100);								// Sleep before retry
 			}else {
+				acquire_success++;
 				break;	// break out of first loop if the lock is acquired
 			}
 		}
@@ -171,10 +187,12 @@ void safe_transfer_timedlock (int from_id, int to_id, double amount, int teller_
 		}
 		else	// If two different accounts
 		{
+			usleep(50);					// Add a small sleep while hold 1st mutex to try to induce deadlock
 			// Try to get second mutex
 			clock_gettime(CLOCK_REALTIME, &abs_timeout);	// Set abs_timeout to the current time
 			abs_timeout.tv_sec += 2;			// Add two seconds to it
 
+			acquire_attempt++;
 			if (pthread_mutex_timedlock(&accounts[to_id].lock, &abs_timeout) != 0)	// if failed to get mutex
 			{
 				pthread_mutex_unlock(&accounts[from_id].lock);		// Release first mutex if
@@ -182,6 +200,8 @@ void safe_transfer_timedlock (int from_id, int to_id, double amount, int teller_
 			}
 			else	// If have both mutexes
 			{
+				acquire_success++;
+
 				// Complete transactions
                                 if ( (accounts[from_id].balance - amount) < 0)		// If funds are insufficient
                                 {
@@ -238,12 +258,14 @@ void safe_transfer_trylock(int from_id, int to_id, double amount, int teller_id)
 		// Take first mutex lock
 		while (1) {	// While haven't obtained the first lock
 
+			acquire_attempt++;
 			if (pthread_mutex_trylock(&accounts[from_id].lock) != 0) {		// If failed to obtain the lock
 				unsigned int seed = (time(NULL) ^ pthread_self());		// Get random seed
 				usleep(rand_r(&seed) % 200);					// Sleep before retry
 			}
 			else									// If lock is obtained
 			{
+				acquire_success++;
 				break; 								// Break out of inner loop
 			}
 		}
@@ -281,18 +303,21 @@ void safe_transfer_trylock(int from_id, int to_id, double amount, int teller_id)
 		}
 		else	// If transferring between two different accounts
 		{
+			usleep(50);
+			acquire_attempt++;
 			//  Try to take second mutex
 			if (pthread_mutex_trylock(&accounts[to_id].lock) != 0) {		// If failed to get the second lock
 
 				pthread_mutex_unlock(&accounts[from_id].lock);			// Release the first lock
 
-				 // Give a little time for another thread to grab the mutex (Avoid livelock)
+				// Give a little time for another thread to grab the mutex (Avoid livelock)
 				unsigned int seed = (time(NULL) ^ pthread_self());
                                 usleep(rand_r(&seed) % 200);
 
 			}
 			else // If obtained both mutexes
 			{
+				acquire_success++;
 				// Complete transaction
 				if ( (accounts[from_id].balance - amount) < 0)	// If funds are insufficient
 				{
@@ -538,6 +563,10 @@ int main (int argc, char *argv[])
 	double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) /1e9;
 
 	printf("\nTime: %.4f seconds\n", elapsed);
+
+	double success_rate = (double)acquire_success / (double)acquire_attempt * 100;
+	printf("\nLock acquisition attempts: %ld\nLock acquisition successes: %ld\nSuccess rate: %.2f%%\n",
+		acquire_attempt, acquire_success, success_rate);
 
 	return 0;
 } // End Main
