@@ -20,6 +20,7 @@
 atomic_long acquire_attempt = 0;
 atomic_long acquire_success = 0;
 
+int sleep_time = 0;
 
 // Account data structure ( GIVEN )
 typedef struct {
@@ -37,6 +38,10 @@ typedef struct {
 
 // Global shared array - THIS CAUSES RACE CONDITIONS !
 Account accounts[NUM_ACCOUNTS];
+
+
+void* teller_thread(void* arg);
+void cleanup_mutexes(void);
 
 /* STRATEGY 1: Lock Ordering ( RECOMMENDED )
 *
@@ -74,7 +79,10 @@ void safe_transfer_ordered ( int from_id, int to_id, double amount, int teller_i
 
 	if (lt == 0) { acquire_success++; }			// Increment acquire_success
 
-	usleep(50);						// Add a small sleep to try to induce deadlock
+	if (sleep_time != 0)
+        {
+                usleep(sleep_time);				// Add a small sleep to try to induce deadlock
+	}
 
 	if (!same_id)						// If not the same ID's
 	{
@@ -144,13 +152,20 @@ void safe_transfer_timedlock (int from_id, int to_id, double amount, int teller_
 		while (1) {	// Repeat until first lock is acquired
 
 			clock_gettime(CLOCK_REALTIME, &abs_timeout);	// Set current time
-			abs_timeout.tv_sec += .5;			// Add 2 seconds
+			abs_timeout.tv_sec += 2;			// Add 2 seconds
 
 			acquire_attempt++;
 			// Used timedlock to wait 2 seconds for the lock to open
 			if (pthread_mutex_timedlock(&accounts[from_id].lock, &abs_timeout) != 0) {	// If didn't acquire lock
 				usleep(100);								// Sleep before retry
-			}else {
+			}
+			else
+			{
+				if (sleep_time != 0)
+			        {
+			                usleep(sleep_time);                             // Add a small sleep to try to induce deadlock
+			        }
+
 				acquire_success++;
 				break;	// break out of first loop if the lock is acquired
 			}
@@ -187,7 +202,7 @@ void safe_transfer_timedlock (int from_id, int to_id, double amount, int teller_
 		}
 		else	// If two different accounts
 		{
-			usleep(50);					// Add a small sleep while hold 1st mutex to try to induce deadlock
+								// Add a small sleep while hold 1st mutex to try to induce deadlock
 			// Try to get second mutex
 			clock_gettime(CLOCK_REALTIME, &abs_timeout);	// Set abs_timeout to the current time
 			abs_timeout.tv_sec += 2;			// Add two seconds to it
@@ -265,6 +280,11 @@ void safe_transfer_trylock(int from_id, int to_id, double amount, int teller_id)
 			}
 			else									// If lock is obtained
 			{
+				if (sleep_time != 0)
+			        {
+			                usleep(sleep_time);                             // Add a small sleep to try to induce deadlock
+			        }
+
 				acquire_success++;
 				break; 								// Break out of inner loop
 			}
@@ -303,7 +323,6 @@ void safe_transfer_trylock(int from_id, int to_id, double amount, int teller_id)
 		}
 		else	// If transferring between two different accounts
 		{
-			usleep(50);
 			acquire_attempt++;
 			//  Try to take second mutex
 			if (pthread_mutex_trylock(&accounts[to_id].lock) != 0) {		// If failed to get the second lock
@@ -350,6 +369,117 @@ void safe_transfer_trylock(int from_id, int to_id, double amount, int teller_id)
 		}
 	} // End while loop
 } // End safe_transfer_timeout method
+
+
+void test_harness() {
+
+	printf("TEST HARNESS RUNNING\n");
+
+	struct timespec start, end;                     // Create two timespec structs
+
+	double time_elapsed, ordered_time, timedlock_time, trylock_time;
+
+	int ordered_attempts, ordered_success, ordered_max_retries,
+	    timedlock_attempts, timedlock_success, timedlock_max_retries,
+	    trylock_attempts, trylock_success, trylock_max_retries,
+	    max_retries;
+
+	// Create array to hold threads
+        pthread_t threads[NUM_THREADS];
+
+        // Create array of Thread info structs
+        thread_info threads_struct[NUM_THREADS];
+
+
+	for (int method = 1; method < 4; method++)
+	{
+		time_elapsed = 0; 	// Reset elapsed time for each method
+
+		acquire_attempt = 0;	// Reset mutex statistics between methods
+		acquire_success = 0;
+		max_retries = 0;
+
+		for (int iter = 0; iter < 10; iter++)
+		{
+			// Initialize accounts
+			for (int i = 0; i < NUM_ACCOUNTS; i++) {
+	                	accounts[i].account_id = i;
+	        	        accounts[i].balance = INITIAL_BALANCE;
+		                accounts[i].transaction_count = 0;
+
+	                	// Initialize the mutex
+	        	        pthread_mutex_init(&accounts[i].lock, NULL);
+	 	       }
+
+			clock_gettime(CLOCK_MONOTONIC , &start);        // Set start equal to current time
+
+			// Create threads
+		        for (int i = 0; i < NUM_THREADS; i++)
+			{
+	        	        threads_struct[i].thread_id = i;        // Set the thread id
+	                	threads_struct[i].method = method;      // Set the method to be used
+		                pthread_create(&threads[i], NULL, teller_thread, &threads_struct[i]);   // Create the thread and pass it the stru>
+	        	}
+
+			// Join threads
+		        for ( int i = 0; i < NUM_THREADS ; i ++) {
+                		pthread_join(threads[i], NULL);
+		        }
+
+		        clock_gettime(CLOCK_MONOTONIC , &end);        // Set start equal to current time
+
+			time_elapsed += (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) /1e9;
+
+			if (acquire_attempt > max_retries)
+			{
+				max_retries = acquire_attempt - acquire_success;
+			}
+
+		}
+
+		if (method == 1)
+		{
+			ordered_time = time_elapsed;
+			ordered_attempts = acquire_attempt;
+			ordered_success = acquire_success;
+			ordered_max_retries = max_retries;
+		}
+		else if (method == 2)
+		{
+			timedlock_time = time_elapsed;
+			timedlock_attempts = acquire_attempt;
+			timedlock_success = acquire_success;
+			timedlock_max_retries = max_retries;
+		}
+		else
+		{
+			trylock_time = time_elapsed;
+			trylock_attempts = acquire_attempt;
+			trylock_success = acquire_success;
+			trylock_max_retries = max_retries;
+		}
+
+		cleanup_mutexes();
+	}
+
+	printf("\n=============DEADLOCK METHOD STATISTICS==============\n");
+
+	printf("\nSHARED STATISTICS\nThread Count: %d\nNumber of Accounts: %d\nTransaction Count per Thread: %d\n",
+		NUM_THREADS, NUM_ACCOUNTS, TRANSACTIONS_PER_THREAD);
+
+	printf("\nLOCK ORDERING STATISTICS\nAverage time: %.4f\nMax Retry Count: %d\nLock Acquisition Success Rate: %.2f\n",
+		(ordered_time / 10), ordered_max_retries, ((double)ordered_success / ordered_attempts * 100));
+
+	printf("\nTIMED LOCK STATISTICS\nAverage time: %.4f\nMax Retry Count: %d\nLock Acquisition Success Rate: %.2f\n",
+                (timedlock_time / 10), timedlock_max_retries, ((double)timedlock_success / timedlock_attempts * 100));
+
+	printf("\nTRYLOCK STATISTICS\nAverage time: %.4f\nMax Retry Count: %d\nLock Acquisition Success Rate: %.2f\n",
+                (trylock_time / 10), trylock_max_retries, ((double)trylock_success / trylock_attempts * 100));
+
+
+	exit(0);
+
+} // End test_harness method
 
 
 void* teller_thread(void* arg) {
@@ -401,9 +531,20 @@ int main (int argc, char *argv[])
 
 	if (argc >= 2)	// If there were at least two arguments entered
 	{
-		method = atoi(argv[1]);				// Set method equal to argument 1
+		method = atoi(argv[1]);
 
-		if (method != 1 && method != 2 && method != 3)	// If arg1 is not 1, 2 or 3
+		if (argc == 3)
+		{
+			if (atoi(argv[2]) >= 0)
+			{
+				sleep_time = atoi(argv[2]);
+			}
+		}
+		if (method == 5)
+		{
+			test_harness();
+		}
+		else if (method != 1 && method != 2 && method != 3)	// If arg1 is not 1, 2 or 3
 		{
 			method = 1;				// Set it to 1
 		}
@@ -411,6 +552,7 @@ int main (int argc, char *argv[])
 	else
 	{
 		method = 1;					// Default method to 1
+		sleep_time = 0;
 	}
 
 	struct timespec start, end;			// Create two timespec structs
