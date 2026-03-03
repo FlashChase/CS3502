@@ -123,7 +123,6 @@ int main () {
 	// Question : With random deposits / withdrawals , what should total be? The sum of all accounts initial balance
 	// Hint : Total money in system should remain constant! Had to set it up as transfers
 	double expected_total = NUM_ACCOUNTS * INITIAL_BALANCE ;
-	printf ( "\nExpected total : $%.2f \n\n" , expected_total ) ;
 
 	// TODO 3 c : Create thread and thread ID arrays
 	// Reference : man pthread_create for pthread_t type

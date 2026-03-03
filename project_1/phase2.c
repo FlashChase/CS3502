@@ -102,8 +102,6 @@ int main () {
 	// Hint : Use clock_gettime ( CLOCK_MONOTONIC , & start );
 
 	struct timespec start, end;			// Create two timespec structs
-	clock_gettime(CLOCK_MONOTONIC , &start);	// Assign current time to start
-
 
 	printf ( "=== Phase 2: Race Conditions Demo ===\n\n" ) ;
 
@@ -129,6 +127,9 @@ int main () {
 
 	int thread_ids[NUM_THREADS];	// Create array to hold thread ID's
 
+	// Set start time
+	clock_gettime(CLOCK_MONOTONIC, &start);
+
 	// Create Threads
 	for ( int i = 0; i < NUM_THREADS ; i ++) {
 		thread_ids[i] = i ; // Store ID persistently
@@ -139,6 +140,9 @@ int main () {
 	for ( int i = 0; i < NUM_THREADS ; i ++) {
 		pthread_join(threads[i], NULL);
 	}
+
+	// Set end time
+	clock_gettime(CLOCK_MONOTONIC, &end);
 
 	// TODO 4: Add mutex cleanup in main ()
 	// Reference : man pthread_mutex_destroy
@@ -170,12 +174,10 @@ int main () {
 
 	// TODO 3: Performance measurement
 
-	clock_gettime(CLOCK_MONOTONIC, &end);	// Set end to current time
-
 	// Calculate and display elapsed time in seconds
 	// End seconds - Start seconds + {(End nanoseconds - Start nanoseconds) converted to seconds}
 	double elapsed = (end.tv_sec - start.tv_sec) +( (end.tv_nsec - start.tv_nsec) /1e9 );
-	printf("\nTime: %.4f seconds\n", elapsed);
+	printf("\nThread runtime: %.4f seconds\n", elapsed);
 
 	return 0;
 } // End Main
