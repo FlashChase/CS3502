@@ -9,6 +9,7 @@
 # include <time.h>
 # include <unistd.h>
 # include <stdbool.h>
+# include <string.h>
 
 // Configuration - experiment with different values !
 # define NUM_ACCOUNTS 2
@@ -56,9 +57,23 @@ void transfer_deadlock_example ( int from_id , int to_id , double amount, int te
 // Add error handling
 void transfer(int from_id, int to_id, double amount, int teller_id) {
 
-	// Acquire first lock
-	pthread_mutex_lock(&accounts[from_id].lock);
+	// Handle invalid account number
+	if (from_id < 0 || from_id >= NUM_ACCOUNTS) {
+		printf("%d is not a valid account number.\n", from_id);
+		return;
+	}
+	 else if (to_id < 0 || to_id >= NUM_ACCOUNTS) {
+		printf("%d is not a valid account number.\n", to_id);
+		return;
+	}
 
+	// Acquire first lock
+	int mtxret = pthread_mutex_lock(&accounts[from_id].lock);
+	// Handle error return
+	if (mtxret != 0) {
+		printf("Failure attempting to obtain Account %d mutex. Error: %s\n", from_id, strerror(mtxret));
+		return;
+	}
 	// Output aquisition message
         printf("Thread %d: Locked account %d \n" , teller_id , from_id ) ;
 
@@ -70,7 +85,12 @@ void transfer(int from_id, int to_id, double amount, int teller_id) {
 
 	// Try to acquire second lock.
 	// At some point another thread (or this thread) will be holding this lock and waiting on the first lock this thread is holding
-        pthread_mutex_lock(&accounts[to_id].lock) ; // DEADLOCK HERE !
+        mtxret = pthread_mutex_lock(&accounts[to_id].lock) ; // DEADLOCK HERE !
+	if (mtxret != 0) {
+		pthread_mutex_unlock(&accounts[from_id].lock);	// Release first lock if second fails
+                printf("Failure attempting to obtain Account %d mutex. Error: %s\n", to_id, strerror(mtxret));
+		return;
+	}
 
         // Transfer ( never reached if deadlocked )
 	if ( (accounts[from_id].balance - amount) < 0) {	// Check for insufficient funds
