@@ -88,8 +88,8 @@ void* teller_thread(void* arg) {
 			teller_id , amount , account_idx ) ;
 
 		// YOUR CODE HERE - call withdrawal_unsafe
-		withdrawal_unsafe(account_idx2 , amount) ;		// Call withdrawal method
-		printf ("Teller %d: Withdrew $%.2f to Account %d \n" ,	// Print withdrawal info
+		withdrawal_unsafe(account_idx2 , amount) ;			// Call withdrawal method
+		printf ("Teller %d: Withdrew $%.2f from Account %d \n" ,	// Print withdrawal info
 			teller_id , amount , account_idx2);
 
 	} // End for loop
@@ -100,6 +100,9 @@ void* teller_thread(void* arg) {
 // TODO 3: Implement main function
 // Reference : See pthread_create and pthread_join man pages
 int main () {
+
+	struct timespec start, end;                     // Create two timespec structs
+
 	printf ( "=== Phase 1: Race Conditions Demo ===\n\n" ) ;
 	// TODO 3 a : Initialize all accounts
 	// Hint : Loop through accounts array
@@ -117,8 +120,8 @@ int main () {
 	}
 
 	// TODO 3 b : Calculate expected final balance
-	// Question : With random deposits / withdrawals , what should total be? Currently no way to tell
-	// Hint : Total money in system should remain constant !		 Had to set it up as transfers
+	// Question : With random deposits / withdrawals , what should total be? The sum of all accounts initial balance
+	// Hint : Total money in system should remain constant! Had to set it up as transfers
 	double expected_total = NUM_ACCOUNTS * INITIAL_BALANCE ;
 	printf ( "\nExpected total : $%.2f \n\n" , expected_total ) ;
 
@@ -126,6 +129,9 @@ int main () {
 	// Reference : man pthread_create for pthread_t type
 	pthread_t threads[NUM_THREADS];
 	int thread_ids[NUM_THREADS]; // GIVEN : Separate array for IDs
+
+        clock_gettime(CLOCK_MONOTONIC , &start);        // Assign current time to start
+
 
 	// TODO 3 d : Create all threads
 	for ( int i = 0; i < NUM_THREADS ; i ++) {
@@ -138,6 +144,9 @@ int main () {
 	for ( int i = 0; i < NUM_THREADS ; i ++) {
 		pthread_join(threads[i], NULL);
 	}
+
+	clock_gettime(CLOCK_MONOTONIC, &end);   // Set end to current time
+
 
 	// TODO 3 f : Calculate and display results
 	printf ( "\n=== Final Results ===\n" ) ;
@@ -164,5 +173,12 @@ int main () {
 		printf("\nRACE CONDITION DETECTED!\n");
 	}
 	printf("\nRun multiple times to see different results\n");
+
+
+	// Calculate and display elapsed time in seconds
+        // End seconds - Start seconds + {(End nanoseconds - Start nanoseconds) converted to seconds}
+        double elapsed = (end.tv_sec - start.tv_sec) +( (end.tv_nsec - start.tv_nsec) / 1e9 );
+        printf("\nThread runtime: %.4f seconds\n", elapsed);
+
 	return 0;
 } // End Main
