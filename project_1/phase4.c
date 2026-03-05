@@ -20,6 +20,7 @@
 
 atomic_long acquire_attempt = 0;
 atomic_long acquire_success = 0;
+_Atomic time_t last_progress;
 
 int sleep_time = 0;
 
@@ -131,6 +132,10 @@ void safe_transfer_ordered ( int from_id, int to_id, double amount, int teller_i
                 teller_id, amount, from_id, to_id);
         }
 	acquire_success++;
+
+	// Set progess time
+        last_progress = time(NULL);
+
 } // End safe_transfer_ordered
 
 /* STRATEGY 2: Timeout Mechanism
@@ -175,7 +180,8 @@ void safe_transfer_timedlock (int from_id, int to_id, double amount, int teller_
 			acquire_attempt++;
 			// Used timedlock to wait 2 seconds for the lock to open
 			if (pthread_mutex_timedlock(&accounts[from_id].lock, &abs_timeout) != 0) {	// If didn't acquire lock
-				usleep(100);								// Sleep before retry
+				unsigned int seed = (time(NULL) ^ pthread_self());              // Get rando>
+                                usleep(rand_r(&seed) % 200);               		// Sleep random time
 			}
 			else
 			{
@@ -196,7 +202,8 @@ void safe_transfer_timedlock (int from_id, int to_id, double amount, int teller_
 		if (pthread_mutex_timedlock(&accounts[to_id].lock, &abs_timeout) != 0)	// if failed to get mutex
 		{
 			pthread_mutex_unlock(&accounts[from_id].lock);		// Release first mutex if
-			usleep(100);						// Sleep to give time for another thread to grab first mutex
+			unsigned int seed = (time(NULL) ^ pthread_self());      // Get rando>
+                        usleep(rand_r(&seed) % 200);              		// Sleep randcm time 
 		}
 		else	// If have both mutexes
 		{
@@ -232,6 +239,8 @@ void safe_transfer_timedlock (int from_id, int to_id, double amount, int teller_
 			success = true;	// Flag Sentinel to end loop and method
 		}
 	}
+	// Set progess time
+        last_progress = time(NULL);
 }
 
 
@@ -329,6 +338,9 @@ void safe_transfer_trylock(int from_id, int to_id, double amount, int teller_id)
 			}
 		}
 	} // End while loop
+
+	// Set progess time
+        last_progress = time(NULL);
 } // End safe_transfer_timeout method
 
 
@@ -493,6 +505,9 @@ int main (int argc, char *argv[])
 	// Which deadlock resolution method
 	int method;
 
+	// Set progess time
+	last_progress = time(NULL);
+
 	if (argc >= 2)	// If there were at least two arguments entered
 	{
 		method = atoi(argv[1]);
@@ -579,9 +594,6 @@ int main (int argc, char *argv[])
                 threads_finished[i] = 0;
         }
 
-        // Mark time of when threads were started
-        time_t thread_start_time = time(NULL);
-
 	// Counter for finished threads
         int threads_finished_count = 0;
 
@@ -610,7 +622,7 @@ int main (int argc, char *argv[])
                 }
 		else								// If all threads are not finished
 		{
-                        if (time(NULL) - thread_start_time > 5)			// Check to see if 5 seconds has passed
+                        if (time(NULL) - last_progress > 5)			// Check to see if 5 seconds has passed
 			{
                                 printf("DEADLOCK DETECTED!\n");			// If true, output deadlock detection message
                                 printf("Threads involved: ");

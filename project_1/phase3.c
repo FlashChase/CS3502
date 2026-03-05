@@ -28,6 +28,8 @@ typedef struct {
 // Global shared array - THIS CAUSES RACE CONDITIONS !
 Account accounts[NUM_ACCOUNTS];
 
+_Atomic time_t last_progress;
+
 // GIVEN : Conceptual example showing HOW deadlock occurs
 void transfer_deadlock_example ( int from_id , int to_id , double amount, int teller_id ) {
 
@@ -110,6 +112,8 @@ void transfer(int from_id, int to_id, double amount, int teller_id) {
         pthread_mutex_unlock(&accounts[to_id].lock) ;	// Release to account lock
         pthread_mutex_unlock(&accounts[from_id].lock) ;	// Release from account lock
 
+	// Update progress timer
+	last_progress = time(NULL);
 
 } // End transfer method
 
@@ -187,15 +191,13 @@ int main () {
 	// Add timeout counter in main()
 	// If no progress for 5 seconds, report suspected deadlock
 
+	last_progress = time(NULL);
+
 	// Create array to keep track of numbers of finished threads
 	int threads_finished[NUM_THREADS];
 	for (int i = 0; i < NUM_THREADS; i++) {
 		threads_finished[i] = 0;
 	}
-
-
-	// Mark time of when threads were started
-	time_t thread_start_time = time(NULL);
 
 	// Counter for finished threads
 	int threads_finished_count = 0;
@@ -225,7 +227,7 @@ int main () {
 		}
 		else								// If all threads are not finished
 		{
-			if (time(NULL) - thread_start_time > 5)			// Check to see if 5 seconds have passed
+			if (time(NULL) - last_progress > 5)			// Check to see if 5 seconds have passed
 			{
 				printf("\nDEADLOCK DETECTED!\n");			// If true output deadlock detection message
 				printf("Threads involved: ");
