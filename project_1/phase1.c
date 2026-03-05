@@ -10,7 +10,7 @@
 
 // Configuration - experiment with different values !
 # define NUM_ACCOUNTS 2
-# define NUM_THREADS 4
+# define NUM_THREADS 3
 # define TRANSACTIONS_PER_THREAD 10
 # define INITIAL_BALANCE 1000.0
 
