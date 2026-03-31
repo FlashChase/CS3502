@@ -52,28 +52,29 @@
             btnFCFS = new System.Windows.Forms.Button();
             btnSJF = new System.Windows.Forms.Button();
             btnPriority = new System.Windows.Forms.Button();
-            btnRoundRobin = new System.Windows.Forms.Button();
             btnSJTRF = new System.Windows.Forms.Button();
             btnHRRN = new System.Windows.Forms.Button();
+            btnRoundRobin = new System.Windows.Forms.Button();
+            btnCompareAll = new System.Windows.Forms.Button();
             cmbLoadExample = new System.Windows.Forms.ComboBox();
             txtProcess = new System.Windows.Forms.TextBox();
             labelProcess = new System.Windows.Forms.Label();
+            resultsPanel = new System.Windows.Forms.Panel();
+            btnExportResults = new System.Windows.Forms.Button();
+            listView1 = new System.Windows.Forms.ListView();
             welcomePanel = new System.Windows.Forms.Panel();
             comparisonPanel = new System.Windows.Forms.Panel();
-            resultsPanel = new System.Windows.Forms.Panel();
-            listView1 = new System.Windows.Forms.ListView();
             aboutPanel = new System.Windows.Forms.Panel();
             aboutTextBox = new System.Windows.Forms.RichTextBox();
             timer1 = new System.Windows.Forms.Timer(components);
-            btnLottery = new System.Windows.Forms.Button();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             contentPanel.SuspendLayout();
             schedulerPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)processDataGrid).BeginInit();
             algorithmButtonPanel.SuspendLayout();
-            welcomePanel.SuspendLayout();
             resultsPanel.SuspendLayout();
+            welcomePanel.SuspendLayout();
             aboutPanel.SuspendLayout();
             SuspendLayout();
             // 
@@ -235,12 +236,12 @@
             // 
             contentPanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             contentPanel.Controls.Add(schedulerPanel);
-            contentPanel.Controls.Add(welcomePanel);
             contentPanel.Controls.Add(resultsPanel);
+            contentPanel.Controls.Add(welcomePanel);
             contentPanel.Controls.Add(aboutPanel);
             contentPanel.Location = new System.Drawing.Point(171, 1);
             contentPanel.Name = "contentPanel";
-            contentPanel.Size = new System.Drawing.Size(728, 600);
+            contentPanel.Size = new System.Drawing.Size(728, 526);
             contentPanel.TabIndex = 1;
             // 
             // schedulerPanel
@@ -260,7 +261,7 @@
             schedulerPanel.Location = new System.Drawing.Point(0, 0);
             schedulerPanel.Name = "schedulerPanel";
             schedulerPanel.Padding = new System.Windows.Forms.Padding(10);
-            schedulerPanel.Size = new System.Drawing.Size(728, 600);
+            schedulerPanel.Size = new System.Drawing.Size(728, 526);
             schedulerPanel.TabIndex = 1;
             schedulerPanel.Visible = false;
             // 
@@ -271,7 +272,7 @@
             processDataGrid.Location = new System.Drawing.Point(20, 95);
             processDataGrid.Name = "processDataGrid";
             processDataGrid.RowHeadersWidth = 82;
-            processDataGrid.Size = new System.Drawing.Size(450, 300);
+            processDataGrid.Size = new System.Drawing.Size(450, 226);
             processDataGrid.TabIndex = 20;
             processDataGrid.CellContentClick += processDataGrid_CellContentClick;
             // 
@@ -344,8 +345,8 @@
             algorithmButtonPanel.Controls.Add(btnRoundRobin);
             algorithmButtonPanel.Controls.Add(btnSJTRF);
             algorithmButtonPanel.Controls.Add(btnHRRN);
-            algorithmButtonPanel.Controls.Add(btnLottery);
-            algorithmButtonPanel.Location = new System.Drawing.Point(20, 407);
+            algorithmButtonPanel.Controls.Add(btnCompareAll);
+            algorithmButtonPanel.Location = new System.Drawing.Point(20, 333);
             algorithmButtonPanel.Name = "algorithmButtonPanel";
             algorithmButtonPanel.Size = new System.Drawing.Size(690, 120);
             algorithmButtonPanel.TabIndex = 25;
@@ -398,22 +399,6 @@
             btnPriority.UseVisualStyleBackColor = false;
             btnPriority.Click += PriorityButton_Click;
             // 
-            // btnRoundRobin
-            // 
-            btnRoundRobin.BackColor = System.Drawing.Color.PapayaWhip;
-            btnRoundRobin.Cursor = System.Windows.Forms.Cursors.Hand;
-            btnRoundRobin.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
-            btnRoundRobin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnRoundRobin.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            btnRoundRobin.Location = new System.Drawing.Point(490, 5);
-            btnRoundRobin.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
-            btnRoundRobin.Name = "btnRoundRobin";
-            btnRoundRobin.Size = new System.Drawing.Size(140, 50);
-            btnRoundRobin.TabIndex = 12;
-            btnRoundRobin.Text = "ROUND ROBIN";
-            btnRoundRobin.UseVisualStyleBackColor = false;
-            btnRoundRobin.Click += RoundRobinButton_Click;
-            // 
             // btnSJTRF
             // 
             btnSJTRF.BackColor = System.Drawing.Color.PapayaWhip;
@@ -445,6 +430,38 @@
             btnHRRN.Text = "HRRN";
             btnHRRN.UseVisualStyleBackColor = false;
             btnHRRN.Click += btnHRRN_Click;
+            // 
+            // btnRoundRobin
+            // 
+            btnRoundRobin.BackColor = System.Drawing.Color.PapayaWhip;
+            btnRoundRobin.Cursor = System.Windows.Forms.Cursors.Hand;
+            btnRoundRobin.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            btnRoundRobin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnRoundRobin.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            btnRoundRobin.Location = new System.Drawing.Point(490, 5);
+            btnRoundRobin.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            btnRoundRobin.Name = "btnRoundRobin";
+            btnRoundRobin.Size = new System.Drawing.Size(140, 50);
+            btnRoundRobin.TabIndex = 12;
+            btnRoundRobin.Text = "ROUND ROBIN";
+            btnRoundRobin.UseVisualStyleBackColor = false;
+            btnRoundRobin.Click += RoundRobinButton_Click;
+            // 
+            // btnCompareAll
+            // 
+            btnCompareAll.BackColor = System.Drawing.Color.PapayaWhip;
+            btnCompareAll.Cursor = System.Windows.Forms.Cursors.Hand;
+            btnCompareAll.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            btnCompareAll.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnCompareAll.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            btnCompareAll.Location = new System.Drawing.Point(330, 65);
+            btnCompareAll.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            btnCompareAll.Name = "btnCompareAll";
+            btnCompareAll.Size = new System.Drawing.Size(300, 50);
+            btnCompareAll.TabIndex = 15;
+            btnCompareAll.Text = "COMPARE ALL";
+            btnCompareAll.UseVisualStyleBackColor = false;
+            btnCompareAll.Click += btnCompareAll_Click;
             // 
             // cmbLoadExample
             // 
@@ -480,6 +497,41 @@
             labelProcess.TabIndex = 6;
             labelProcess.Text = "Number of Processes:";
             // 
+            // resultsPanel
+            // 
+            resultsPanel.BackColor = System.Drawing.SystemColors.Control;
+            resultsPanel.Controls.Add(btnExportResults);
+            resultsPanel.Controls.Add(listView1);
+            resultsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            resultsPanel.Location = new System.Drawing.Point(0, 0);
+            resultsPanel.Name = "resultsPanel";
+            resultsPanel.Padding = new System.Windows.Forms.Padding(10);
+            resultsPanel.Size = new System.Drawing.Size(728, 526);
+            resultsPanel.TabIndex = 0;
+            // 
+            // btnExportResults
+            // 
+            btnExportResults.Location = new System.Drawing.Point(617, 481);
+            btnExportResults.Name = "btnExportResults";
+            btnExportResults.Size = new System.Drawing.Size(100, 32);
+            btnExportResults.TabIndex = 11;
+            btnExportResults.Text = "Export Results";
+            btnExportResults.UseVisualStyleBackColor = true;
+            // 
+            // listView1
+            // 
+            listView1.BackColor = System.Drawing.SystemColors.Window;
+            listView1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            listView1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            listView1.FullRowSelect = true;
+            listView1.GridLines = true;
+            listView1.Location = new System.Drawing.Point(10, 10);
+            listView1.Name = "listView1";
+            listView1.Size = new System.Drawing.Size(708, 461);
+            listView1.TabIndex = 10;
+            listView1.UseCompatibleStateImageBehavior = false;
+            listView1.View = System.Windows.Forms.View.Details;
+            // 
             // welcomePanel
             // 
             welcomePanel.BackColor = System.Drawing.SystemColors.Control;
@@ -488,7 +540,7 @@
             welcomePanel.Location = new System.Drawing.Point(0, 0);
             welcomePanel.Name = "welcomePanel";
             welcomePanel.Padding = new System.Windows.Forms.Padding(10);
-            welcomePanel.Size = new System.Drawing.Size(728, 600);
+            welcomePanel.Size = new System.Drawing.Size(728, 526);
             welcomePanel.TabIndex = 0;
             // 
             // comparisonPanel
@@ -496,35 +548,9 @@
             comparisonPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             comparisonPanel.Location = new System.Drawing.Point(10, 10);
             comparisonPanel.Name = "comparisonPanel";
-            comparisonPanel.Size = new System.Drawing.Size(708, 580);
+            comparisonPanel.Size = new System.Drawing.Size(708, 506);
             comparisonPanel.TabIndex = 0;
             comparisonPanel.Paint += comparisonPanel_Paint;
-            // 
-            // resultsPanel
-            // 
-            resultsPanel.BackColor = System.Drawing.SystemColors.Control;
-            resultsPanel.Controls.Add(listView1);
-            resultsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            resultsPanel.Location = new System.Drawing.Point(0, 0);
-            resultsPanel.Name = "resultsPanel";
-            resultsPanel.Padding = new System.Windows.Forms.Padding(10);
-            resultsPanel.Size = new System.Drawing.Size(728, 600);
-            resultsPanel.TabIndex = 0;
-            // 
-            // listView1
-            // 
-            listView1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            listView1.BackColor = System.Drawing.SystemColors.Window;
-            listView1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            listView1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            listView1.FullRowSelect = true;
-            listView1.GridLines = true;
-            listView1.Location = new System.Drawing.Point(10, 10);
-            listView1.Name = "listView1";
-            listView1.Size = new System.Drawing.Size(700, 482);
-            listView1.TabIndex = 10;
-            listView1.UseCompatibleStateImageBehavior = false;
-            listView1.View = System.Windows.Forms.View.Details;
             // 
             // aboutPanel
             // 
@@ -534,7 +560,7 @@
             aboutPanel.Location = new System.Drawing.Point(0, 0);
             aboutPanel.Name = "aboutPanel";
             aboutPanel.Padding = new System.Windows.Forms.Padding(10);
-            aboutPanel.Size = new System.Drawing.Size(728, 600);
+            aboutPanel.Size = new System.Drawing.Size(728, 526);
             aboutPanel.TabIndex = 2;
             aboutPanel.Visible = false;
             // 
@@ -547,25 +573,9 @@
             aboutTextBox.Location = new System.Drawing.Point(15, 15);
             aboutTextBox.Name = "aboutTextBox";
             aboutTextBox.ReadOnly = true;
-            aboutTextBox.Size = new System.Drawing.Size(698, 570);
+            aboutTextBox.Size = new System.Drawing.Size(698, 496);
             aboutTextBox.TabIndex = 0;
             aboutTextBox.Text = "";
-            // 
-            // btnLottery
-            // 
-            btnLottery.BackColor = System.Drawing.Color.PapayaWhip;
-            btnLottery.Cursor = System.Windows.Forms.Cursors.Hand;
-            btnLottery.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
-            btnLottery.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnLottery.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            btnLottery.Location = new System.Drawing.Point(330, 65);
-            btnLottery.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
-            btnLottery.Name = "btnLottery";
-            btnLottery.Size = new System.Drawing.Size(140, 50);
-            btnLottery.TabIndex = 15;
-            btnLottery.Text = "LOTTERY";
-            btnLottery.UseVisualStyleBackColor = false;
-            btnLottery.Click += btnLottery_Click;
             // 
             // CpuSchedulerForm
             // 
@@ -586,8 +596,8 @@
             schedulerPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)processDataGrid).EndInit();
             algorithmButtonPanel.ResumeLayout(false);
-            welcomePanel.ResumeLayout(false);
             resultsPanel.ResumeLayout(false);
+            welcomePanel.ResumeLayout(false);
             aboutPanel.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -630,6 +640,7 @@
         private System.Windows.Forms.Panel comparisonPanel;
         private System.Windows.Forms.Button btnSJTRF;
         private System.Windows.Forms.Button btnHRRN;
-        private System.Windows.Forms.Button btnLottery;
+        private System.Windows.Forms.Button btnExportResults;
+        private System.Windows.Forms.Button btnCompareAll;
     }
 }

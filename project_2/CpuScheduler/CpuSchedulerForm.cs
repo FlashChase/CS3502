@@ -626,13 +626,13 @@ Instructions:
             listView1.View = View.Details;
 
             // Set up columns for detailed results
-            listView1.Columns.Add("Process ID", 100, HorizontalAlignment.Center);
-            listView1.Columns.Add("Arrival", 80, HorizontalAlignment.Center);
-            listView1.Columns.Add("Burst", 80, HorizontalAlignment.Center);
-            listView1.Columns.Add("Start", 80, HorizontalAlignment.Center);
-            listView1.Columns.Add("Finish", 80, HorizontalAlignment.Center);
-            listView1.Columns.Add("Waiting", 80, HorizontalAlignment.Center);
-            listView1.Columns.Add("Turnaround", 90, HorizontalAlignment.Center);
+            listView1.Columns.Add("Process ID", 105, HorizontalAlignment.Center);
+            listView1.Columns.Add("Arrival", 100, HorizontalAlignment.Center);
+            listView1.Columns.Add("Burst", 100, HorizontalAlignment.Center);
+            listView1.Columns.Add("Start", 100, HorizontalAlignment.Center);
+            listView1.Columns.Add("Finish", 100, HorizontalAlignment.Center);
+            listView1.Columns.Add("Waiting", 100, HorizontalAlignment.Center);
+            listView1.Columns.Add("Turnaround", 100, HorizontalAlignment.Center);
 
             // Add process results
             foreach (var result in results)
@@ -650,15 +650,20 @@ Instructions:
             // Add summary statistics
             var avgWaiting = results.Average(r => r.WaitingTime);
             var avgTurnaround = results.Average(r => r.TurnaroundTime);
+            var totalTime = results.Min(r => r.ArrivalTime) + results.Max(r => r.FinishTime);
+            var cpuUtilization = (double)(results.Sum(r => r.BurstTime) / totalTime) * 100;
+            var throughput = (double)results.Count() / totalTime;
 
             var summaryItem = new ListViewItem("SUMMARY");
             summaryItem.SubItems.Add(algorithmName);
             summaryItem.SubItems.Add($"{results.Count} processes");
             summaryItem.SubItems.Add($"Avg Wait: {avgWaiting:F1}");
             summaryItem.SubItems.Add($"Avg Turn: {avgTurnaround:F1}");
-            summaryItem.SubItems.Add("");
-            summaryItem.SubItems.Add("");
+            summaryItem.SubItems.Add($"CPU Util: {cpuUtilization:F1}%");
+            summaryItem.SubItems.Add($"Throughput: {throughput:F1}");
             listView1.Items.Add(summaryItem);
+
+
 
             // TODO: STUDENTS - Add performance metrics calculation and display here
             // Required metrics for your project report:
@@ -676,6 +681,40 @@ Instructions:
             // - Performance metrics summary for each algorithm tested
             // Reference the SaveData_Click() method above to learn CSV file handling
             // This will help you create tables/charts for your project report
+        }
+
+        private void DisplayComparisonResults(Dictionary<string, List<SchedulingResult>> results)
+        {
+            listView1.Clear();
+            listView1.View = View.Details;
+
+            // Set up columns for detailed results
+            listView1.Columns.Add("Method", 142, HorizontalAlignment.Center);
+            listView1.Columns.Add("Avg Wait", 142, HorizontalAlignment.Center);
+            listView1.Columns.Add("Avg Turn", 142, HorizontalAlignment.Center);
+            listView1.Columns.Add("CPU Util", 141, HorizontalAlignment.Center);
+            listView1.Columns.Add("Throughput", 141, HorizontalAlignment.Center);
+
+
+            foreach (var result in results)
+            {
+                var avgWaiting = result.Value.Average(r => r.WaitingTime);
+                var avgTurnaround = result.Value.Average(r => r.TurnaroundTime);
+                var totalTime = result.Value.Min(r => r.ArrivalTime) + result.Value.Max(r => r.FinishTime);
+                var cpuUtilization = (double)(result.Value.Sum(r => r.BurstTime) / totalTime) * 100;
+                var throughput = (double)result.Value.Count() / totalTime;
+
+
+                var summaryItem = new ListViewItem(result.Key);
+                summaryItem.SubItems.Add($"{avgWaiting:F3}");
+                summaryItem.SubItems.Add($"{avgTurnaround:F3}");
+                summaryItem.SubItems.Add($"{cpuUtilization:F3}");
+                summaryItem.SubItems.Add($"{throughput:F3}");
+                listView1.Items.Add(summaryItem);
+            }
+            
+
+            
         }
 
         /// <summary>
@@ -1490,9 +1529,35 @@ Instructions:
             }
         }
 
-        private void btnLottery_Click(object sender, EventArgs e)
+        private void btnCompareAll_Click(object sender, EventArgs e)
         {
+            var processData = GetProcessDataFromGrid();
+            var cmpAllResults = new Dictionary<string, List<SchedulingResult>>();
+            if (processData.Count > 0)
+            {
+                // STUDENTS: Example implementation using DataGrid data
+                cmpAllResults.Add("FCFS", RunFCFSAlgorithm(processData));
+                cmpAllResults.Add("SJF", RunSJFAlgorithm(processData));
+                cmpAllResults.Add("PRIORITY", RunPriorityAlgorithm(processData));
+                cmpAllResults.Add("ROUND ROBIN", RunRoundRobinAlgorithm(processData));
+                cmpAllResults.Add("SJTRF", RunSJTRFAlgorithm(processData));
+                cmpAllResults.Add("HRRN", RunHRRNAlgorithm(processData));
 
+
+                // Update Results tab with detailed scheduling results
+                DisplayComparisonResults(cmpAllResults);
+
+                // Switch to Results panel and update sidebar
+                ShowPanel(resultsPanel);
+                sidePanel.Height = btnDashBoard.Height;
+                sidePanel.Top = btnDashBoard.Top;
+            }
+            else
+            {
+                MessageBox.Show("Please set process count and ensure the data grid has process data.",
+                    "No Process Data", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtProcess.Focus();
+            }
         }
 
         private void welcomeTextBox_TextChanged(object sender, EventArgs e)
@@ -1509,6 +1574,8 @@ Instructions:
         {
 
         }
+
+        
     }
 
     /// <summary>
