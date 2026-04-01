@@ -52,15 +52,14 @@
             btnFCFS = new System.Windows.Forms.Button();
             btnSJF = new System.Windows.Forms.Button();
             btnPriority = new System.Windows.Forms.Button();
-            btnSJTRF = new System.Windows.Forms.Button();
-            btnHRRN = new System.Windows.Forms.Button();
             btnRoundRobin = new System.Windows.Forms.Button();
+            btnSRTF = new System.Windows.Forms.Button();
+            btnHRRN = new System.Windows.Forms.Button();
             btnCompareAll = new System.Windows.Forms.Button();
             cmbLoadExample = new System.Windows.Forms.ComboBox();
             txtProcess = new System.Windows.Forms.TextBox();
             labelProcess = new System.Windows.Forms.Label();
             resultsPanel = new System.Windows.Forms.Panel();
-            btnExportResults = new System.Windows.Forms.Button();
             listView1 = new System.Windows.Forms.ListView();
             welcomePanel = new System.Windows.Forms.Panel();
             comparisonPanel = new System.Windows.Forms.Panel();
@@ -343,7 +342,7 @@
             algorithmButtonPanel.Controls.Add(btnSJF);
             algorithmButtonPanel.Controls.Add(btnPriority);
             algorithmButtonPanel.Controls.Add(btnRoundRobin);
-            algorithmButtonPanel.Controls.Add(btnSJTRF);
+            algorithmButtonPanel.Controls.Add(btnSRTF);
             algorithmButtonPanel.Controls.Add(btnHRRN);
             algorithmButtonPanel.Controls.Add(btnCompareAll);
             algorithmButtonPanel.Location = new System.Drawing.Point(20, 333);
@@ -399,21 +398,37 @@
             btnPriority.UseVisualStyleBackColor = false;
             btnPriority.Click += PriorityButton_Click;
             // 
-            // btnSJTRF
+            // btnRoundRobin
             // 
-            btnSJTRF.BackColor = System.Drawing.Color.PapayaWhip;
-            btnSJTRF.Cursor = System.Windows.Forms.Cursors.Hand;
-            btnSJTRF.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
-            btnSJTRF.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnSJTRF.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            btnSJTRF.Location = new System.Drawing.Point(10, 65);
-            btnSJTRF.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
-            btnSJTRF.Name = "btnSJTRF";
-            btnSJTRF.Size = new System.Drawing.Size(140, 50);
-            btnSJTRF.TabIndex = 13;
-            btnSJTRF.Text = "SJTRF";
-            btnSJTRF.UseVisualStyleBackColor = false;
-            btnSJTRF.Click += btnSJTRF_Click;
+            btnRoundRobin.BackColor = System.Drawing.Color.PapayaWhip;
+            btnRoundRobin.Cursor = System.Windows.Forms.Cursors.Hand;
+            btnRoundRobin.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            btnRoundRobin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnRoundRobin.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            btnRoundRobin.Location = new System.Drawing.Point(490, 5);
+            btnRoundRobin.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            btnRoundRobin.Name = "btnRoundRobin";
+            btnRoundRobin.Size = new System.Drawing.Size(140, 50);
+            btnRoundRobin.TabIndex = 12;
+            btnRoundRobin.Text = "ROUND ROBIN";
+            btnRoundRobin.UseVisualStyleBackColor = false;
+            btnRoundRobin.Click += RoundRobinButton_Click;
+            // 
+            // btnSRTF
+            // 
+            btnSRTF.BackColor = System.Drawing.Color.PapayaWhip;
+            btnSRTF.Cursor = System.Windows.Forms.Cursors.Hand;
+            btnSRTF.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            btnSRTF.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnSRTF.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            btnSRTF.Location = new System.Drawing.Point(10, 65);
+            btnSRTF.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            btnSRTF.Name = "btnSRTF";
+            btnSRTF.Size = new System.Drawing.Size(140, 50);
+            btnSRTF.TabIndex = 13;
+            btnSRTF.Text = "SRTF";
+            btnSRTF.UseVisualStyleBackColor = false;
+            btnSRTF.Click += btnSRTF_Click;
             // 
             // btnHRRN
             // 
@@ -430,22 +445,6 @@
             btnHRRN.Text = "HRRN";
             btnHRRN.UseVisualStyleBackColor = false;
             btnHRRN.Click += btnHRRN_Click;
-            // 
-            // btnRoundRobin
-            // 
-            btnRoundRobin.BackColor = System.Drawing.Color.PapayaWhip;
-            btnRoundRobin.Cursor = System.Windows.Forms.Cursors.Hand;
-            btnRoundRobin.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
-            btnRoundRobin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnRoundRobin.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            btnRoundRobin.Location = new System.Drawing.Point(490, 5);
-            btnRoundRobin.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
-            btnRoundRobin.Name = "btnRoundRobin";
-            btnRoundRobin.Size = new System.Drawing.Size(140, 50);
-            btnRoundRobin.TabIndex = 12;
-            btnRoundRobin.Text = "ROUND ROBIN";
-            btnRoundRobin.UseVisualStyleBackColor = false;
-            btnRoundRobin.Click += RoundRobinButton_Click;
             // 
             // btnCompareAll
             // 
@@ -500,7 +499,6 @@
             // resultsPanel
             // 
             resultsPanel.BackColor = System.Drawing.SystemColors.Control;
-            resultsPanel.Controls.Add(btnExportResults);
             resultsPanel.Controls.Add(listView1);
             resultsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             resultsPanel.Location = new System.Drawing.Point(0, 0);
@@ -508,15 +506,6 @@
             resultsPanel.Padding = new System.Windows.Forms.Padding(10);
             resultsPanel.Size = new System.Drawing.Size(728, 526);
             resultsPanel.TabIndex = 0;
-            // 
-            // btnExportResults
-            // 
-            btnExportResults.Location = new System.Drawing.Point(617, 481);
-            btnExportResults.Name = "btnExportResults";
-            btnExportResults.Size = new System.Drawing.Size(100, 32);
-            btnExportResults.TabIndex = 11;
-            btnExportResults.Text = "Export Results";
-            btnExportResults.UseVisualStyleBackColor = true;
             // 
             // listView1
             // 
@@ -638,9 +627,8 @@
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Button btnComparison;
         private System.Windows.Forms.Panel comparisonPanel;
-        private System.Windows.Forms.Button btnSJTRF;
+        private System.Windows.Forms.Button btnSRTF;
         private System.Windows.Forms.Button btnHRRN;
-        private System.Windows.Forms.Button btnExportResults;
         private System.Windows.Forms.Button btnCompareAll;
     }
 }

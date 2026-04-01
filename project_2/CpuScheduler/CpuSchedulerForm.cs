@@ -473,9 +473,9 @@ Instructions:
 
         /// <summary>
         /// Shortest Job Time Remaining
-        /// Each process gets a time quantum, then cycles to next process
+        /// The process with the lowest burst time remaining get one cycle of run
         /// </summary>
-        private List<SchedulingResult> RunSJTRFAlgorithm(List<ProcessData> processes)
+        private List<SchedulingResult> RunSRTFAlgorithm(List<ProcessData> processes)
         {
             var results = new List<SchedulingResult>();
 
@@ -502,7 +502,7 @@ Instructions:
                 }
 
                 var pid = remainingBurstTimes.Where(v => v.Value > 0).MinBy(v => v.Value).Key;
-                var activeProcess = availableProcesses.Where(p => p.ProcessID == pid);
+                //var activeProcess = availableProcesses.Where(p => p.ProcessID == pid);
 
                 if (availableProcesses.Count > 0)
                 {
@@ -626,13 +626,13 @@ Instructions:
             listView1.View = View.Details;
 
             // Set up columns for detailed results
-            listView1.Columns.Add("Process ID", 105, HorizontalAlignment.Center);
+            listView1.Columns.Add("Process ID", 78, HorizontalAlignment.Center);
             listView1.Columns.Add("Arrival", 100, HorizontalAlignment.Center);
             listView1.Columns.Add("Burst", 100, HorizontalAlignment.Center);
-            listView1.Columns.Add("Start", 100, HorizontalAlignment.Center);
-            listView1.Columns.Add("Finish", 100, HorizontalAlignment.Center);
+            listView1.Columns.Add("Start", 110, HorizontalAlignment.Center);
+            listView1.Columns.Add("Finish", 110, HorizontalAlignment.Center);
             listView1.Columns.Add("Waiting", 100, HorizontalAlignment.Center);
-            listView1.Columns.Add("Turnaround", 100, HorizontalAlignment.Center);
+            listView1.Columns.Add("Turnaround", 110, HorizontalAlignment.Center);
 
             // Add process results
             foreach (var result in results)
@@ -657,10 +657,10 @@ Instructions:
             var summaryItem = new ListViewItem("SUMMARY");
             summaryItem.SubItems.Add(algorithmName);
             summaryItem.SubItems.Add($"{results.Count} processes");
+            summaryItem.SubItems.Add($"CPU Util: {cpuUtilization:F2}%");
+            summaryItem.SubItems.Add($"Throughput: {throughput:F3}");
             summaryItem.SubItems.Add($"Avg Wait: {avgWaiting:F1}");
-            summaryItem.SubItems.Add($"Avg Turn: {avgTurnaround:F1}");
-            summaryItem.SubItems.Add($"CPU Util: {cpuUtilization:F1}%");
-            summaryItem.SubItems.Add($"Throughput: {throughput:F1}");
+            summaryItem.SubItems.Add($"Avg Turn: {avgTurnaround:F2}");
             listView1.Items.Add(summaryItem);
 
 
@@ -735,10 +735,10 @@ Instructions:
             // Set column widths and configure for larger datasets
             if (processDataGrid.Columns.Count > 0)
             {
-                processDataGrid.Columns[0].Width = 100; // Process ID
-                processDataGrid.Columns[1].Width = 100; // Burst Time
-                processDataGrid.Columns[2].Width = 100; // Priority  
-                processDataGrid.Columns[3].Width = 100; // Arrival Time
+                processDataGrid.Columns[0].Width = 112; // Process ID
+                processDataGrid.Columns[1].Width = 112; // Burst Time
+                processDataGrid.Columns[2].Width = 112; // Priority  
+                processDataGrid.Columns[3].Width = 111; // Arrival Time
 
                 // STUDENTS: Performance optimizations for larger datasets
                 processDataGrid.VirtualMode = false; // Set to true if using 500+ processes
@@ -1184,6 +1184,9 @@ Instructions:
             ApplyRoundedCorners(btnSJF);
             ApplyRoundedCorners(btnPriority);
             ApplyRoundedCorners(btnRoundRobin);
+            ApplyRoundedCorners(btnSRTF);
+            ApplyRoundedCorners(btnHRRN);
+            ApplyRoundedCorners(btnCompareAll);
             ApplyRoundedCorners(btnDarkModeToggle);
 
             // Apply default dark theme
@@ -1305,6 +1308,10 @@ Instructions:
             ApplyDarkThemeToSchedulerButton(btnSJF);
             ApplyDarkThemeToSchedulerButton(btnPriority);
             ApplyDarkThemeToSchedulerButton(btnRoundRobin);
+            ApplyDarkThemeToSchedulerButton(btnSRTF);
+            ApplyDarkThemeToSchedulerButton(btnHRRN);
+            ApplyDarkThemeToSchedulerButton(btnCompareAll);
+
         }
 
         /// <summary>
@@ -1375,16 +1382,25 @@ Instructions:
             ApplyLightThemeToSchedulerButton(btnLoadData);
 
             // Algorithm buttons with their original colors
+            btnSetProcessCount.BackColor = Color.Gainsboro;
             btnFCFS.BackColor = Color.Beige;
             btnSJF.BackColor = Color.AntiqueWhite;
             btnPriority.BackColor = Color.Bisque;
             btnRoundRobin.BackColor = Color.PapayaWhip;
+            btnSRTF.BackColor = Color.Moccasin;
+            btnHRRN.BackColor = Color.LemonChiffon;
+            btnCompareAll.BackColor = Color.Cornsilk;
+
 
             // Reset text color for algorithm buttons
+            btnSetProcessCount.ForeColor = SystemColors.ControlText;
             btnFCFS.ForeColor = SystemColors.ControlText;
             btnSJF.ForeColor = SystemColors.ControlText;
             btnPriority.ForeColor = SystemColors.ControlText;
             btnRoundRobin.ForeColor = SystemColors.ControlText;
+            btnSRTF.ForeColor = SystemColors.ControlText;
+            btnHRRN.ForeColor = SystemColors.ControlText;
+            btnCompareAll.ForeColor = SystemColors.ControlText;
         }
 
         /// <summary>
@@ -1477,16 +1493,16 @@ Instructions:
         /// STUDENTS: Updated to use GetProcessDataFromGrid() instead of prompts
         /// Each process gets a time quantum (default 4) before switching to next process
         /// </summary>
-        private void btnSJTRF_Click(object sender, EventArgs e)
+        private void btnSRTF_Click(object sender, EventArgs e)
         {
             var processData = GetProcessDataFromGrid();
             if (processData.Count > 0)
             {
                 // STUDENTS: Example implementation using DataGrid data
-                var results = RunSJTRFAlgorithm(processData);
+                var results = RunSRTFAlgorithm(processData);
 
                 // Update Results tab with detailed scheduling results
-                DisplaySchedulingResults(results, "SJTRF - Shortest Job Time Remaining First");
+                DisplaySchedulingResults(results, "SRTF - Shortest Job Time Remaining First");
 
                 // Switch to Results panel and update sidebar
                 ShowPanel(resultsPanel);
@@ -1540,7 +1556,7 @@ Instructions:
                 cmpAllResults.Add("SJF", RunSJFAlgorithm(processData));
                 cmpAllResults.Add("PRIORITY", RunPriorityAlgorithm(processData));
                 cmpAllResults.Add("ROUND ROBIN", RunRoundRobinAlgorithm(processData));
-                cmpAllResults.Add("SJTRF", RunSJTRFAlgorithm(processData));
+                cmpAllResults.Add("SRTF", RunSRTFAlgorithm(processData));
                 cmpAllResults.Add("HRRN", RunHRRNAlgorithm(processData));
 
 
