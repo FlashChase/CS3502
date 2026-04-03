@@ -472,11 +472,11 @@ Instructions:
         }
 
         /// <summary>
-        /// Shortest Job Time Remaining
-        /// The process with the lowest burst time remaining get one cycle of run
+        /// Shortest Remaining Time First
+        /// The process with the lowest burst time remaining get one cycle of run execution
         /// </summary>
         private List<SchedulingResult> RunSRTFAlgorithm(List<ProcessData> processes)
-        {
+        {   // XYZ
             var results = new List<SchedulingResult>();
 
             var currentTime = 0;
@@ -494,35 +494,42 @@ Instructions:
 
             while (remainingProcesses > 0)
             {
+                // Add processes that arrived at current time
                 availableProcesses.AddRange(processes.Where(p => p.ArrivalTime == currentTime));
 
+                // Add newly available processes to remaining burst time dictionary
                 foreach (var p in availableProcesses)
                 {
                     remainingBurstTimes.TryAdd(p.ProcessID, p.BurstTime);
                 }
-
-                var pid = remainingBurstTimes.Where(v => v.Value > 0).MinBy(v => v.Value).Key;
-                //var activeProcess = availableProcesses.Where(p => p.ProcessID == pid);
-
-                if (availableProcesses.Count > 0)
+                              
+                // If processes are available
+                if (availableProcesses.Count() > 0 && remainingBurstTimes.Count() > 0)
                 {
+                    // Select the process with the lowest remaining burst time
+                    var pid = remainingBurstTimes.Where(v => v.Value > 0).MinBy(v => v.Value).Key;
+
+                    // If first execution of process, set start time
                     if (startTimes[pid] == -1)
                     {
                         startTimes[pid] = currentTime;
                     }
 
+                    // If process if finished
                     if (--remainingBurstTimes[pid] == 0)
                     {
                         finishTimes[pid] = currentTime + 1;
-                        availableProcesses.RemoveAt(0);
+                        availableProcesses.RemoveAll(p => p.ProcessID == pid);
+                        remainingBurstTimes.Remove(pid);
                         remainingProcesses--;
                     }
                 }
-
+                // Increment time
                 currentTime++;
 
-            }
+            }// End while when no remaining processes
 
+            // Add statistics of each process to result list
             foreach (var process in processes)
             {
                 results.Add(new SchedulingResult
@@ -543,7 +550,7 @@ Instructions:
         /// HRRN - Highest Response Ratio Next
         /// </summary>
         private List<SchedulingResult> RunHRRNAlgorithm(List<ProcessData> processes)
-        {
+        {   // XYZ
             var results = new List<SchedulingResult>();
 
             var currentTime = 0;
@@ -561,29 +568,34 @@ Instructions:
 
             while (remainingProcesses > 0)
             {
+                // Add processes that arrived during the the last process burst time, up to and including current time
                 availableProcesses.AddRange(processes.Where(p => p.ArrivalTime <= currentTime && addedPIDS.Add(p.ProcessID)));
-
-                availableProcesses = availableProcesses.OrderBy(p => (p.BurstTime + (currentTime - p.ArrivalTime)) / (double)p.BurstTime).ToList();
-
+                                
                 if (availableProcesses.Count > 0)
                 {
-                    var activeProcess = availableProcesses.Last();
-
+                    // Select the process with the highest response ratio ( (burst + wait) / burst
+                    var activeProcess = availableProcesses.OrderBy(p => (p.BurstTime + (currentTime - p.ArrivalTime)) / (double)p.BurstTime).ToList().Last();
+              
+                    // Remove it from available process list (will run until finished)
                     availableProcesses.Remove(activeProcess);
 
+                    // Set start time
                     startTimes[activeProcess.ProcessID] = currentTime;
 
+                    // Increment time by the processes burst time
                     currentTime += activeProcess.BurstTime;
 
+                    // Set finish time to new current time
                     finishTimes[activeProcess.ProcessID] = currentTime;
 
+                    // Decrement remaining processes
                     remainingProcesses--;
                 }
-                else
+                else // No processes available
                 {
-                    currentTime++;
+                    currentTime++; // Increment current time
                 }
-            }
+            } // End while loop when no remaining processes
 
             foreach (var process in processes)
             {
@@ -647,11 +659,11 @@ Instructions:
                 listView1.Items.Add(item);
             }
 
-            // Add summary statistics
+            // Add summary statistics XYZ
             var avgWaiting = results.Average(r => r.WaitingTime);
             var avgTurnaround = results.Average(r => r.TurnaroundTime);
             var totalTime = results.Min(r => r.ArrivalTime) + results.Max(r => r.FinishTime);
-            var cpuUtilization = (double)(results.Sum(r => r.BurstTime) / totalTime) * 100;
+            var cpuUtilization = ((double)results.Sum(r => r.BurstTime) / totalTime) * 100;
             var throughput = (double)results.Count() / totalTime;
 
             var summaryItem = new ListViewItem("SUMMARY");
@@ -683,6 +695,8 @@ Instructions:
             // This will help you create tables/charts for your project report
         }
 
+        // 
+            // XYZ
         private void DisplayComparisonResults(Dictionary<string, List<SchedulingResult>> results)
         {
             listView1.Clear();
@@ -701,14 +715,14 @@ Instructions:
                 var avgWaiting = result.Value.Average(r => r.WaitingTime);
                 var avgTurnaround = result.Value.Average(r => r.TurnaroundTime);
                 var totalTime = result.Value.Min(r => r.ArrivalTime) + result.Value.Max(r => r.FinishTime);
-                var cpuUtilization = (double)(result.Value.Sum(r => r.BurstTime) / totalTime) * 100;
+                var cpuUtilization = ((double)result.Value.Sum(r => r.BurstTime) / totalTime) * 100;
                 var throughput = (double)result.Value.Count() / totalTime;
 
 
                 var summaryItem = new ListViewItem(result.Key);
-                summaryItem.SubItems.Add($"{avgWaiting:F3}");
-                summaryItem.SubItems.Add($"{avgTurnaround:F3}");
-                summaryItem.SubItems.Add($"{cpuUtilization:F3}");
+                summaryItem.SubItems.Add($"{avgWaiting:F2}");
+                summaryItem.SubItems.Add($"{avgTurnaround:F2}");
+                summaryItem.SubItems.Add($"{cpuUtilization:F2}%");
                 summaryItem.SubItems.Add($"{throughput:F3}");
                 listView1.Items.Add(summaryItem);
             }
@@ -1494,7 +1508,7 @@ Instructions:
         /// Each process gets a time quantum (default 4) before switching to next process
         /// </summary>
         private void btnSRTF_Click(object sender, EventArgs e)
-        {
+        {   // XYZ
             var processData = GetProcessDataFromGrid();
             if (processData.Count > 0)
             {
@@ -1522,7 +1536,7 @@ Instructions:
         /// STUDENTS: Updated to use GetProcessDataFromGrid() instead of prompts
         /// </summary>
         private void btnHRRN_Click(object sender, EventArgs e)
-        {
+        {   // XYZ
             var processData = GetProcessDataFromGrid();
             if (processData.Count > 0)
             {
@@ -1546,12 +1560,12 @@ Instructions:
         }
 
         private void btnCompareAll_Click(object sender, EventArgs e)
-        {
+        {   // XYZ
             var processData = GetProcessDataFromGrid();
             var cmpAllResults = new Dictionary<string, List<SchedulingResult>>();
             if (processData.Count > 0)
             {
-                // STUDENTS: Example implementation using DataGrid data
+                // Add algorithm name and results to dictionary
                 cmpAllResults.Add("FCFS", RunFCFSAlgorithm(processData));
                 cmpAllResults.Add("SJF", RunSJFAlgorithm(processData));
                 cmpAllResults.Add("PRIORITY", RunPriorityAlgorithm(processData));
