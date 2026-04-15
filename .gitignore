@@ -1,21 +1,26 @@
-# Compiled files
-*.o
-*.out
-hello
-employee
-logwriter
-producer
-consumer
-bidirectional
-phase1
-phase2
-phase3
-phase4
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 
-# Log files
+# Build results
+bin/
+obj/
+
+# Debug / Release
+Debug/
+Release/
+
+# .NET binaries
+*.exe
+*.dll
+*.pdb
+
+# Logs
 *.log
 
-# Editor backups
-*˜
-*.swp
-phase1
+# OS files
+Thumbs.db
+Desktop.ini
