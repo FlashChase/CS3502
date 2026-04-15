@@ -28,9 +28,12 @@ namespace Project_3
 
             // Add the root node to the TreeView
             tvDir.Nodes.Add(rootNode);
-
+                      
             // Pass the root node to function to add sister & child nodes
             RecursiveAddDirectories(rootNode);
+
+            // Start TreeView with the root folder expanded
+            rootNode.Expand();
         }
 
         public static void RecursiveAddDirectories(TreeNode node)
@@ -53,7 +56,7 @@ namespace Project_3
 
             foreach (string dir in Directory.GetDirectories(path))
             {
-                TreeNode newNode = new TreeNode(dir);
+                TreeNode newNode = new TreeNode(Path.GetFileName(dir));
 
                 newNode.Tag = dir;
 
@@ -63,20 +66,16 @@ namespace Project_3
             }
         }
 
+        /// <summary>
+        /// Returns the path to the parent directory of the root node
+        /// </summary>
+        /// <param name="tvDir"></param>
+        /// <returns>string</returns>
         public static string GetParentDirectory(TreeView tvDir)
         {
             string currentDir = tvDir.Nodes[0].Tag.ToString();
 
-            string[] dir = currentDir.Split("\\");
-
-            dir[dir.Length - 1] = "";
-
-            string parentDir = "";
-
-            foreach (string str in dir)
-            {
-                parentDir = "\\" + str;
-            }
+            string parentDir = Directory.GetParent(currentDir).FullName;
 
             return parentDir;
         }
