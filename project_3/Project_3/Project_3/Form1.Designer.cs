@@ -30,13 +30,14 @@
         {
             pnlMaster = new Panel();
             pnlMiddle = new Panel();
-            splitContFiles = new SplitContainer();
+            splitContainer1 = new SplitContainer();
             tvDir = new TreeView();
             lstFileInfo = new ListBox();
+            tblSearchResults = new TableLayoutPanel();
             rtbFileText = new RichTextBox();
             pnlTop = new Panel();
             btnSearch = new Button();
-            txtPath = new TextBox();
+            txtSearch = new TextBox();
             btnDirDown = new Button();
             btnDirUp = new Button();
             pnlBottom = new Panel();
@@ -45,10 +46,10 @@
             btnReadFile = new Button();
             pnlMaster.SuspendLayout();
             pnlMiddle.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)splitContFiles).BeginInit();
-            splitContFiles.Panel1.SuspendLayout();
-            splitContFiles.Panel2.SuspendLayout();
-            splitContFiles.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
             pnlTop.SuspendLayout();
             pnlBottom.SuspendLayout();
             SuspendLayout();
@@ -66,7 +67,7 @@
             // 
             // pnlMiddle
             // 
-            pnlMiddle.Controls.Add(splitContFiles);
+            pnlMiddle.Controls.Add(splitContainer1);
             pnlMiddle.Dock = DockStyle.Fill;
             pnlMiddle.Location = new Point(0, 49);
             pnlMiddle.Name = "pnlMiddle";
@@ -74,27 +75,28 @@
             pnlMiddle.Size = new Size(800, 350);
             pnlMiddle.TabIndex = 1;
             // 
-            // splitContFiles
+            // splitContainer1
             // 
-            splitContFiles.Dock = DockStyle.Fill;
-            splitContFiles.Location = new Point(10, 10);
-            splitContFiles.Name = "splitContFiles";
+            splitContainer1.Dock = DockStyle.Fill;
+            splitContainer1.Location = new Point(10, 10);
+            splitContainer1.Name = "splitContainer1";
             // 
-            // splitContFiles.Panel1
+            // splitContainer1.Panel1
             // 
-            splitContFiles.Panel1.BackColor = Color.White;
-            splitContFiles.Panel1.Controls.Add(tvDir);
-            splitContFiles.Panel1.Margin = new Padding(3, 0, 0, 0);
+            splitContainer1.Panel1.BackColor = Color.White;
+            splitContainer1.Panel1.Controls.Add(tvDir);
+            splitContainer1.Panel1.Margin = new Padding(3, 0, 0, 0);
             // 
-            // splitContFiles.Panel2
+            // splitContainer1.Panel2
             // 
-            splitContFiles.Panel2.BackColor = Color.White;
-            splitContFiles.Panel2.Controls.Add(lstFileInfo);
-            splitContFiles.Panel2.Controls.Add(rtbFileText);
-            splitContFiles.Panel2.Margin = new Padding(0, 0, 3, 0);
-            splitContFiles.Size = new Size(780, 330);
-            splitContFiles.SplitterDistance = 331;
-            splitContFiles.TabIndex = 0;
+            splitContainer1.Panel2.BackColor = Color.White;
+            splitContainer1.Panel2.Controls.Add(lstFileInfo);
+            splitContainer1.Panel2.Controls.Add(tblSearchResults);
+            splitContainer1.Panel2.Controls.Add(rtbFileText);
+            splitContainer1.Panel2.Margin = new Padding(0, 0, 3, 0);
+            splitContainer1.Size = new Size(780, 330);
+            splitContainer1.SplitterDistance = 331;
+            splitContainer1.TabIndex = 0;
             // 
             // tvDir
             // 
@@ -111,12 +113,30 @@
             lstFileInfo.Dock = DockStyle.Fill;
             lstFileInfo.ForeColor = Color.Black;
             lstFileInfo.FormattingEnabled = true;
+            lstFileInfo.IntegralHeight = false;
             lstFileInfo.ItemHeight = 15;
             lstFileInfo.Location = new Point(0, 0);
             lstFileInfo.Margin = new Padding(0);
             lstFileInfo.Name = "lstFileInfo";
             lstFileInfo.Size = new Size(445, 330);
             lstFileInfo.TabIndex = 0;
+            // 
+            // tblSearchResults
+            // 
+            tblSearchResults.AutoScroll = true;
+            tblSearchResults.ColumnCount = 2;
+            tblSearchResults.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tblSearchResults.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tblSearchResults.Dock = DockStyle.Fill;
+            tblSearchResults.Location = new Point(0, 0);
+            tblSearchResults.Name = "tblSearchResults";
+            tblSearchResults.RowCount = 2;
+            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            tblSearchResults.Size = new Size(445, 330);
+            tblSearchResults.TabIndex = 1;
             // 
             // rtbFileText
             // 
@@ -132,7 +152,7 @@
             // pnlTop
             // 
             pnlTop.Controls.Add(btnSearch);
-            pnlTop.Controls.Add(txtPath);
+            pnlTop.Controls.Add(txtSearch);
             pnlTop.Controls.Add(btnDirDown);
             pnlTop.Controls.Add(btnDirUp);
             pnlTop.Dock = DockStyle.Top;
@@ -149,14 +169,16 @@
             btnSearch.TabIndex = 2;
             btnSearch.Text = "Search";
             btnSearch.UseVisualStyleBackColor = true;
+            btnSearch.Click += btnSearch_Click;
             // 
-            // txtPath
+            // txtSearch
             // 
-            txtPath.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtPath.Location = new Point(361, 11);
-            txtPath.Name = "txtPath";
-            txtPath.Size = new Size(264, 25);
-            txtPath.TabIndex = 1;
+            txtSearch.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtSearch.Location = new Point(361, 11);
+            txtSearch.Name = "txtSearch";
+            txtSearch.Size = new Size(264, 25);
+            txtSearch.TabIndex = 1;
+            txtSearch.KeyDown += txtSearch_KeyDown;
             // 
             // btnDirDown
             // 
@@ -166,6 +188,7 @@
             btnDirDown.TabIndex = 5;
             btnDirDown.Text = "Down";
             btnDirDown.UseVisualStyleBackColor = true;
+            btnDirDown.Click += btnDirDown_Click;
             // 
             // btnDirUp
             // 
@@ -231,10 +254,10 @@
             Text = "File System Implementation";
             pnlMaster.ResumeLayout(false);
             pnlMiddle.ResumeLayout(false);
-            splitContFiles.Panel1.ResumeLayout(false);
-            splitContFiles.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)splitContFiles).EndInit();
-            splitContFiles.ResumeLayout(false);
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
             pnlBottom.ResumeLayout(false);
@@ -244,10 +267,10 @@
         #endregion
 
         private Panel pnlMaster;
-        private SplitContainer splitContFiles;
+        private SplitContainer splitContainer1;
         private Button btnReadFile;
         private Button btnSearch;
-        private TextBox txtPath;
+        private TextBox txtSearch;
         private System.Windows.Forms.TreeView tvDir;
         private ListBox lstFileInfo;
         private Panel pnlTop;
@@ -258,5 +281,6 @@
         private Button btnDirUp;
         private Button btnSave;
         private Button btnEdit;
+        private TableLayoutPanel tblSearchResults;
     }
 }

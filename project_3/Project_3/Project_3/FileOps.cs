@@ -36,11 +36,26 @@ namespace Project_3
             rootNode.Expand();
         }
 
+        /// <summary>
+        /// Recursively add files and directories to TreeView
+        /// </summary>
+        /// <param name="node"></param>
         public static void RecursiveAddDirectories(TreeNode node)
         {
+            // Store path
             string path = node.Tag.ToString();
 
-            string[] files = Directory.GetFiles(path);
+            // Declare enumerable
+            IEnumerable<string> files;
+
+            try
+            {
+                files = Directory.EnumerateFiles(path);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return;
+            }
 
             foreach (string file in files)
             {
@@ -54,11 +69,21 @@ namespace Project_3
                 }
             }
 
-            foreach (string dir in Directory.GetDirectories(path))
+            IEnumerable<string> folders;
+            try
             {
-                TreeNode newNode = new TreeNode(Path.GetFileName(dir));
+                folders = Directory.EnumerateDirectories(path);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return;
+            }
+                       
+            foreach (string folder in folders)
+            {
+                TreeNode newNode = new TreeNode(Path.GetFileName(folder));
 
-                newNode.Tag = dir;
+                newNode.Tag = folder;
 
                 node.Nodes.Add(newNode);
 
@@ -78,6 +103,34 @@ namespace Project_3
             string parentDir = Directory.GetParent(currentDir).FullName;
 
             return parentDir;
+        }
+
+        public static string GetFirstSubDirectory(TreeView tvDir, int index)
+        {
+            TreeNode node;
+            try
+            {
+                node = tvDir.Nodes[index];
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                MessageBox.Show("Directory contains no subdirectories");
+                return null;
+            }
+            
+
+            foreach (TreeNode child in node.Nodes)
+            {
+                if (Directory.Exists(child.Tag.ToString()))
+                {
+                    return child.Tag.ToString();
+                }
+            }
+                        
+            GetFirstSubDirectory(tvDir, ++index);
+           
+
+            return null;
         }
 
         /// <summary>
@@ -147,6 +200,22 @@ namespace Project_3
             File.WriteAllText(path, text);
         }
 
+        /// <summary>
+        ///  Search nodes for file names containing user search criteria.
+        ///  Matches are entered into list of TreeNodes and returned.
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="root"></param>
+        /// <returns>List<TreeNode></returns>
+        public static void SearchForFile(string str, TreeNode root, List<TreeNode> matchList)
+        {
+            foreach (TreeNode node in root.Nodes) {
+                if (node.Text.ToLower().Contains(str.ToLower())) {
+                    matchList.Add(node);                  
+                }
+                SearchForFile(str, node, matchList);
+            }
+        }
 
 
     }
