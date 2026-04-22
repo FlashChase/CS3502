@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Project_3
 {
@@ -143,12 +144,14 @@ namespace Project_3
             // Get file extension
             string ext = Path.GetExtension(path).ToLower();
 
-            // Check if the file can be read as text (based on extension)
-            if (ext == ".txt" || ext == ".cs" || ext == ".xml" || ext == ".csv" || ext == ".json")
+            // Exclude common non-text files
+            if (ext == ".exe" || ext == ".png" || ext == ".jpg" || ext == ".dll" || ext == ".zip" ||
+                ext == ".pdf" || ext == ".mp4" || ext == ".pdb" || ext == ".docx" || ext == "xlsx" ||
+                )
             {
-                return true;
+                return false;
             }
-            return false; // If not text file 
+            return true; // If not common non-text file type
         }
 
         /// <summary>
@@ -158,7 +161,27 @@ namespace Project_3
         /// <returns>string</returns>
         public static string ReadFile(string path)
         {
-            return File.ReadAllText(path);
+            try
+            {
+                if (File.Exists(path))
+                {
+                    return File.ReadAllText(path);
+                }
+                else if (Directory.Exists(path))
+                {
+                    return "90210Error&";
+                }
+                else
+                {
+                    MessageBox.Show("Error: Could not find file on path");
+                    return "90210Error&";
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show("File Access Denied");
+                return "90210Error&";
+            }
         }
 
         /// <summary>

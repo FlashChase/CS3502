@@ -66,10 +66,13 @@ namespace Project_3
             }
             else
             {
-                ShowControl(rtbFileText);
-                rtbFileText.Text = FileOps.ReadFile(file);
+                string fileText = FileOps.ReadFile(file);
+                if (!fileText.Equals("90210Error&"))
+                {
+                    ShowControl(rtbFileText);
+                    rtbFileText.Text = fileText;
+                }
             }
-
         }
 
         private void btnEdit_Click(object sender, EventArgs e)

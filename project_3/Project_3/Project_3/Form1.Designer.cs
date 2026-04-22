@@ -106,6 +106,7 @@
             tvDir.Size = new Size(331, 330);
             tvDir.TabIndex = 0;
             tvDir.AfterSelect += tvDir_AfterSelect;
+            tvDir.DoubleClick += btnReadFile_Click;
             // 
             // lstFileInfo
             // 
