@@ -2,6 +2,7 @@
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -43,11 +44,20 @@ namespace Project_3
         /// <param name="node"></param>
         public static void RecursiveAddDirectories(TreeNode node)
         {
-            // Store path
-            string path = node.Tag.ToString();
+            string path;
 
-            // Declare enumerable
-            IEnumerable<string> files;
+            // Store path
+            if (node.Tag.ToString != null)
+            {
+                path = node.Tag.ToString();
+            }
+            else
+            {
+                return;
+            }
+
+                // Declare enumerable
+                IEnumerable<string> files;
 
             try
             {
@@ -133,6 +143,30 @@ namespace Project_3
 
             return null;
         }
+        
+        public static string GetCurrentDirectory(string path)
+        {
+            try
+            {
+                if (Directory.Exists(path))
+                {
+                    return path;
+                }
+                else if (File.Exists(path))
+                {
+                    return Path.GetDirectoryName(path);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (PathTooLongException e)
+            {
+                MessageBox.Show(e.Message);
+                return null;
+            }
+        }
 
         /// <summary>
         /// Checks if path leads to a text file
@@ -146,8 +180,7 @@ namespace Project_3
 
             // Exclude common non-text files
             if (ext == ".exe" || ext == ".png" || ext == ".jpg" || ext == ".dll" || ext == ".zip" ||
-                ext == ".pdf" || ext == ".mp4" || ext == ".pdb" || ext == ".docx" || ext == "xlsx" ||
-                )
+                ext == ".pdf" || ext == ".mp4" || ext == ".pdb" || ext == ".docx" || ext == "xlsx" )
             {
                 return false;
             }
@@ -238,6 +271,68 @@ namespace Project_3
                 }
                 SearchForFile(str, node, matchList);
             }
+        }
+
+        public static string CreateFile(string fileName, string path, TreeNode currentNode) 
+        {
+            string filePath = "";
+
+            if (!fileName.EndsWith(".*"))
+            {
+                fileName += ".txt";
+            }
+            
+            try
+            {
+                // Check if current path is a valid directory
+                if (Directory.Exists(path))
+                {
+                    if (!path.EndsWith(@"\"))
+                    {
+                        path += @"\";
+                    }
+
+                    filePath = Path.Combine(path, fileName);
+
+                    using (File.Create(filePath))
+                    {
+                        MessageBox.Show(Path.GetFullPath(filePath));
+                        MessageBox.Show(File.Exists(filePath).ToString());
+                        if (currentNode.Parent != null)
+                        {
+                            TreeNode newNode = currentNode.Parent.Nodes.Add(fileName);
+                            newNode.Tag = filePath;
+                            return filePath;
+                        }
+                    }
+                }
+                else if (File.Exists(path))
+                {
+                    var choice = MessageBox.Show("File exists on the current path! Do you want to overwrite it?", "Confirm",
+                                                MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
+                    if (choice == DialogResult.Yes)
+                    {
+                        path = Path.GetDirectoryName(path);
+                        filePath = Path.Combine(path, fileName);
+                        File.Create(filePath);
+                        return filePath;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show($"No valid directory in\n{path}\nto create file");
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
+
+            return filePath;
         }
 
 

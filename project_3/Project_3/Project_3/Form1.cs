@@ -23,6 +23,7 @@ namespace Project_3
             lstFileInfo.Visible = false;
             rtbFileText.Visible = false;
             tblSearchResults.Visible = false;
+            pnlCreate.Visible = false;
 
             btnEdit.Visible = false;
             btnSave.Visible = false;
@@ -43,8 +44,13 @@ namespace Project_3
             {
                 ShowControl(lstFileInfo);
                 FileOps.DisplayFileProperties(lstFileInfo, path);
+                btnReadFile.Visible = true;
             }
-            btnReadFile.Visible = true;
+            else if (Directory.Exists(path))
+            {
+                ShowControl(lstFileInfo);
+            }
+
 
         }
 
@@ -126,8 +132,8 @@ namespace Project_3
                     FileOps.BuildFileTree(tvDir, path);
                 }
             }
-            
-            
+
+
         }
 
         private void btnSearch_Click(object sender, EventArgs e)
@@ -198,6 +204,47 @@ namespace Project_3
                 e.SuppressKeyPress = true;
             }
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnCreate_Click(object sender, EventArgs e)
+        {
+            if (tvDir.SelectedNode == null)
+            {
+                txtCurrentDirectory.Text = FileOps.GetCurrentDirectory(tvDir.Nodes[0].Tag.ToString());
+            }
+            else 
+            {
+                txtCurrentDirectory.Text = FileOps.GetCurrentDirectory(tvDir.SelectedNode.Tag.ToString());
                 
+            }
+
+            ShowControl(pnlCreate);
+        }
+
+
+
+        private void btnCreateAndOpen_Click(object sender, EventArgs e)
+        {
+            string newFilePath = null;
+            string fileName = txtNewFileName.Text;
+
+            if (fileName == "")
+            {
+                MessageBox.Show("File must have a name");
+                return;
+            }
+
+            // Create File
+            newFilePath = FileOps.CreateFile(txtNewFileName.Text, txtCurrentDirectory.Text, tvDir.SelectedNode);
+
+            if (newFilePath != null)
+            {
+                ShowControl(rtbFileText);
+            }
+        }
     }
 }
