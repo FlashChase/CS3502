@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Windows.Forms.Design;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Project_3
@@ -16,26 +19,166 @@ namespace Project_3
         /// Establishes the root node of the treeview and calls recursive function to add nodes
         /// </summary>
         /// <param name="tvDir"></param>
-        public static void BuildFileTree(TreeView tvDir, string path = "")
+        public static void BuildTreeLevel(TreeView tvDir, string path = "")
         {
+
+            tvDir.Nodes.Clear();
+
             if (path.Equals(""))
             {
                 // Get path to current directory if not given
                 path = Directory.GetCurrentDirectory();
             }
-           
+
             // Create root node with filename display and full path as tag
             TreeNode rootNode = new TreeNode(Path.GetFileName(path));
             rootNode.Tag = path;
 
-            // Add the root node to the TreeView
             tvDir.Nodes.Add(rootNode);
-                      
-            // Pass the root node to function to add sister & child nodes
-            RecursiveAddDirectories(rootNode);
 
-            // Start TreeView with the root folder expanded
+            string[] files = Directory.GetFiles(path);
+            string[] directories = Directory.GetDirectories(path);
+
+            foreach (string directory in directories)
+            {
+                TreeNode newNode = new TreeNode(Path.GetFileName(directory));
+                newNode.Tag = directory;
+
+                rootNode.Nodes.Add(newNode);
+
+                try
+                {
+                    if (Directory.GetFiles(directory).Length < 1 && Directory.GetDirectories(directory).Length < 1)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        newNode.Nodes.Add("DUMMY");
+                    }
+                }
+                catch (UnauthorizedAccessException ua)
+                {
+                    continue;
+                }
+            }
+
+            foreach (string file in files)
+            {
+                TreeNode newNode = new TreeNode(Path.GetFileName(file));
+                newNode.Tag = file;
+
+                rootNode.Nodes.Add(newNode);
+            }
+
             rootNode.Expand();
+        }
+
+        public static void BuildFullTree(TreeView tvDir, TreeNode node = null)
+        {
+            string rootPath;
+
+            if (node == null)
+            {
+                rootPath = tvDir.Nodes[0].Tag.ToString();
+            }
+            else
+            {
+                rootPath = node.Tag.ToString();
+            }
+
+            // Create root node with filename display and full path as tag
+            TreeNode rootNode = new TreeNode(Path.GetFileName(rootPath));
+            rootNode.Tag = rootPath;
+
+            tvDir.Nodes.Clear();
+
+            tvDir.Nodes.Add(rootNode);
+
+            string[] files = Directory.GetFiles(rootPath);
+            string[] directories = Directory.GetDirectories(rootPath);
+
+            foreach (string directory in directories)
+            {
+                TreeNode newNode = new TreeNode(Path.GetFileName(directory));
+                newNode.Tag = directory;
+
+                rootNode.Nodes.Add(newNode);
+
+                try
+                {
+                    if (Directory.GetFiles(directory).Length < 1 && Directory.GetDirectories(directory).Length < 1)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        RecursiveAddDirectories(newNode);
+                    }
+                }
+                catch (UnauthorizedAccessException ua)
+                {
+                    continue;
+                }
+            }
+
+            foreach (string file in files)
+            {
+                TreeNode newNode = new TreeNode(Path.GetFileName(file));
+                newNode.Tag = file;
+
+                rootNode.Nodes.Add(newNode);
+            }
+
+            rootNode.Expand();
+        }
+
+        public static void AddChildren(TreeNode node)
+        {
+
+            if (node.Nodes[0].Text != "DUMMY") 
+            {
+                return; 
+            }
+
+            node.Nodes.Clear();
+
+            string path = node.Tag.ToString();
+
+            string[] directories = Directory.GetDirectories(path);
+            string[] files = Directory.GetFiles(path);
+
+            foreach (string directory in directories)
+            {
+                TreeNode newNode = new TreeNode(Path.GetFileName(directory));
+                newNode.Tag = directory;
+
+                node.Nodes.Add(newNode);
+
+                try
+                {
+                    if (Directory.GetFiles(directory).Length < 1 && Directory.GetDirectories(directory).Length < 1)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        newNode.Nodes.Add("DUMMY");
+                    }
+                }
+                catch (UnauthorizedAccessException ua)
+                {
+                    continue;
+                }                
+            }
+
+            foreach (string file in files)
+            {
+                TreeNode newNode = new TreeNode(Path.GetFileName(file));
+                newNode.Tag = file;
+
+                node.Nodes.Add(newNode);
+            }
         }
 
         /// <summary>
@@ -56,8 +199,43 @@ namespace Project_3
                 return;
             }
 
-                // Declare enumerable
-                IEnumerable<string> files;
+            string[] directories = Directory.GetDirectories(path);
+            string[] files = Directory.GetFiles(path);
+
+            foreach (string directory in directories)
+            {
+                TreeNode newNode = new TreeNode(Path.GetFileName(directory));
+                newNode.Tag = directory;
+
+                node.Nodes.Add(newNode);
+
+                try
+                {
+                    if (Directory.GetFiles(directory).Length < 1 && Directory.GetDirectories(directory).Length < 1)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        RecursiveAddDirectories(newNode);
+                    }
+                }
+                catch (UnauthorizedAccessException ua)
+                {
+                    continue;
+                }
+            }
+
+            foreach (string file in files)
+            {
+                TreeNode newNode = new TreeNode(Path.GetFileName(file));
+                newNode.Tag = file;
+
+                node.Nodes.Add(newNode);
+            }
+            /*
+            // Declare enumerable
+            IEnumerable<string> files;
 
             try
             {
@@ -76,7 +254,7 @@ namespace Project_3
 
                     fileNode.Tag = file;
 
-                    node.Nodes.Add(fileNode);              
+                    node.Nodes.Add(fileNode);
                 }
             }
 
@@ -89,7 +267,7 @@ namespace Project_3
             {
                 return;
             }
-                       
+
             foreach (string folder in folders)
             {
                 TreeNode newNode = new TreeNode(Path.GetFileName(folder));
@@ -100,6 +278,7 @@ namespace Project_3
 
                 RecursiveAddDirectories(newNode);
             }
+            */
         }
 
         /// <summary>
@@ -111,9 +290,17 @@ namespace Project_3
         {
             string currentDir = tvDir.Nodes[0].Tag.ToString();
 
-            string parentDir = Directory.GetParent(currentDir).FullName;
+            try
+            {
+                string parentDir = Directory.GetParent(currentDir).FullName;
+                return parentDir;
+            }
+            catch (NullReferenceException nu)
+            {
+                return null;
+            }
 
-            return parentDir;
+            return null;
         }
 
         public static string GetFirstSubDirectory(TreeView tvDir, int index)
@@ -128,7 +315,7 @@ namespace Project_3
                 MessageBox.Show("Directory contains no subdirectories");
                 return null;
             }
-            
+
 
             foreach (TreeNode child in node.Nodes)
             {
@@ -137,13 +324,13 @@ namespace Project_3
                     return child.Tag.ToString();
                 }
             }
-                        
+
             GetFirstSubDirectory(tvDir, ++index);
-           
+
 
             return null;
         }
-        
+
         public static string GetCurrentDirectory(string path)
         {
             try
@@ -180,7 +367,7 @@ namespace Project_3
 
             // Exclude common non-text files
             if (ext == ".exe" || ext == ".png" || ext == ".jpg" || ext == ".dll" || ext == ".zip" ||
-                ext == ".pdf" || ext == ".mp4" || ext == ".pdb" || ext == ".docx" || ext == "xlsx" )
+                ext == ".pdf" || ext == ".mp4" || ext == ".pdb" || ext == ".docx" || ext == "xlsx")
             {
                 return false;
             }
@@ -198,22 +385,30 @@ namespace Project_3
             {
                 if (File.Exists(path))
                 {
-                    return File.ReadAllText(path);
+                    try
+                    {
+                        return File.ReadAllText(path);
+                    }
+                    catch (IOException io)
+                    {
+                        MessageBox.Show(io.Message);
+                        return null;
+                    }
                 }
                 else if (Directory.Exists(path))
                 {
-                    return "90210Error&";
+                    return null;
                 }
                 else
                 {
                     MessageBox.Show("Error: Could not find file on path");
-                    return "90210Error&";
+                    return null;
                 }
             }
             catch (UnauthorizedAccessException)
             {
                 MessageBox.Show("File Access Denied");
-                return "90210Error&";
+                return null;
             }
         }
 
@@ -251,9 +446,18 @@ namespace Project_3
         /// </summary>
         /// <param name="text"></param>
         /// <param name="path"></param>
-        public static void WriteFile(string text, string path)
+        public static void WriteFile(string text, TreeNode node)
         {
-            File.WriteAllText(path, text);
+            string path = node.Tag.ToString();
+            try
+            {
+                File.WriteAllText(path, text);
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                MessageBox.Show("Error: Cannot access " + path);
+            }
+
         }
 
         /// <summary>
@@ -265,76 +469,272 @@ namespace Project_3
         /// <returns>List<TreeNode></returns>
         public static void SearchForFile(string str, TreeNode root, List<TreeNode> matchList)
         {
-            foreach (TreeNode node in root.Nodes) {
-                if (node.Text.ToLower().Contains(str.ToLower())) {
-                    matchList.Add(node);                  
+            foreach (TreeNode node in root.Nodes)
+            {
+                if (node.Text.ToLower().Contains(str.ToLower()))
+                {
+                    matchList.Add(node);
                 }
                 SearchForFile(str, node, matchList);
             }
         }
 
-        public static string CreateFile(string fileName, string path, TreeNode currentNode) 
+        public static TreeNode CreateFile(string fileName, string directoryPath, TreeNodeCollection nodes)
         {
-            string filePath = "";
-
-            if (!fileName.EndsWith(".*"))
+            // Give file .txt extension if it doesn't have a . ending
+            if (!Path.HasExtension(fileName))
             {
                 fileName += ".txt";
             }
-            
+
+            string filePath;
+
+            filePath = Path.Combine(directoryPath, fileName);
+  
             try
             {
-                // Check if current path is a valid directory
-                if (Directory.Exists(path))
-                {
-                    if (!path.EndsWith(@"\"))
-                    {
-                        path += @"\";
-                    }
-
-                    filePath = Path.Combine(path, fileName);
-
-                    using (File.Create(filePath))
-                    {
-                        MessageBox.Show(Path.GetFullPath(filePath));
-                        MessageBox.Show(File.Exists(filePath).ToString());
-                        if (currentNode.Parent != null)
-                        {
-                            TreeNode newNode = currentNode.Parent.Nodes.Add(fileName);
-                            newNode.Tag = filePath;
-                            return filePath;
-                        }
-                    }
-                }
-                else if (File.Exists(path))
+                if (File.Exists(filePath))
                 {
                     var choice = MessageBox.Show("File exists on the current path! Do you want to overwrite it?", "Confirm",
                                                 MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
                     if (choice == DialogResult.Yes)
                     {
-                        path = Path.GetDirectoryName(path);
-                        filePath = Path.Combine(path, fileName);
-                        File.Create(filePath);
-                        return filePath;
+                        filePath = Path.Combine(directoryPath, fileName);
+
+                        using (File.Create(filePath)) ;
+
+                        return FindNode(nodes, filePath);                      
                     }
-                    else
+                }
+
+                // Check if current path is a valid directory
+                else if (Directory.Exists(directoryPath) || Directory.Exists(directoryPath + "'\'"))
+                {
+                    filePath = Path.Combine(directoryPath, fileName);
+
+                    // using opens and closes a file stream
+                    using (File.Create(filePath));
+
+                    TreeNode? dirNode = FindNode(nodes, directoryPath);
+
+                    if (dirNode != null)
                     {
-                        return null;
-                    }
+                        TreeNode newNode = dirNode.Nodes.Add(fileName);
+                        newNode.Tag = filePath;
+                        return newNode;
+                    }                    
                 }
                 else
                 {
-                    MessageBox.Show($"No valid directory in\n{path}\nto create file");
+                    MessageBox.Show($"No valid directory in\n{directoryPath}\nto create file");
                 }
+            }
+            catch (PathTooLongException tl)
+            {
+                MessageBox.Show("File not created. Path exceeded maximum length");
+                MessageBox.Show(tl.Message);
             }
             catch (Exception e)
             {
                 MessageBox.Show(e.Message);
             }
 
-            return filePath;
+            MessageBox.Show("Reached end of method, returning null");
+            return null;
         }
 
+        public static TreeNode CreateDirectory(string directoryName, string directoryPath, TreeNodeCollection nodes)
+        {
+            string newdirectoryPath;
 
+            newdirectoryPath = Path.Combine(directoryPath, directoryName);
+
+            try
+            {            
+                // Check if current path is a valid directory
+                if (Directory.Exists(directoryPath) || Directory.Exists(directoryPath + "'\'"))
+                {
+                    newdirectoryPath = Path.Combine(directoryPath, directoryName);
+
+                    Directory.CreateDirectory(newdirectoryPath);
+
+                    TreeNode? dirNode = FindNode(nodes, directoryPath);
+
+                    if (dirNode != null)
+                    {
+                        TreeNode newNode = dirNode.Nodes.Add(directoryName);
+                        newNode.Tag = newdirectoryPath;
+                        return newNode;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show($"No valid directory in\n{directoryPath}\nto create file");
+                }
+            }
+            catch (PathTooLongException tl)
+            {
+                MessageBox.Show("File not created. Path exceeded maximum length");
+                MessageBox.Show(tl.Message);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
+
+            MessageBox.Show("Reached end of method, returning null");
+            return null;
+        }
+
+        public static void DeleteFile(TreeNode node)
+        {
+            string path = node.Tag.ToString();
+            int fails = 0;
+
+            if (File.Exists(path))
+            {
+                string fileName = Path.GetFileName(path);
+                DialogResult result = MessageBox.Show("Are you sure you want to delete " + fileName + "?", "Delete File",
+                                      MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    try
+                    {
+                        File.Delete(path);
+                    }
+                    catch (UnauthorizedAccessException e)
+                    {
+                        fails++;
+                        MessageBox.Show(e.Message);
+                    }
+                }
+                else { return; }
+            }
+            else if (Directory.Exists(path))
+            {
+                string[] files = Directory.GetFiles(path);
+                string[] subDir = Directory.GetDirectories(path);
+
+                foreach (string file in files)
+                {
+                    try
+                    {
+                        File.Delete(file);
+                    }
+                    catch (UnauthorizedAccessException e)
+                    {
+                        fails++;
+                        MessageBox.Show(e.Message);
+                    }
+                }
+                foreach (string dir in subDir)
+                {
+                    fails += RecursiveDelete(dir);
+                }
+
+                if (fails == 0)
+                {
+                    try
+                    {
+                        Directory.Delete(path);
+                    }
+                    catch (IOException io)
+                    {
+                        MessageBox.Show(io.Message);
+                    }
+                    catch (UnauthorizedAccessException e)
+                    {
+                        MessageBox.Show(e.Message);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Directory contains multiple files that cannot be deleted");
+                }
+            }
+
+            node.Remove();
+        }
+
+        private static int RecursiveDelete(string path)
+        {
+
+            try
+            {
+                Directory.Delete(path, true);
+                return 0;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                return 1;
+            }
+            /*
+            int fails = 0;
+            string[] files = Directory.GetFiles(path);
+            string[] subDir = Directory.GetDirectories(path);
+
+            foreach (string file in files)
+            {
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (UnauthorizedAccessException e)
+                {
+                    fails++;
+                    MessageBox.Show(e.Message);
+                }
+            }
+
+            foreach (string dir in subDir)
+            {
+                fails += RecursiveDelete(dir);
+                if (fails == 0)
+                {
+                    Directory.Delete(dir);
+                }
+            }
+
+            return fails;
+            */
+        }
+
+        public static TreeNode UpdateSelectedNode(TreeNodeCollection nodes, string filePath)
+        {
+            foreach (TreeNode node in nodes)
+            {
+                if (node.Tag.ToString().Equals(filePath))
+                {
+                    return node;
+                }
+            }
+            return null;
+        }
+
+        public static TreeNode FindNode(TreeNodeCollection nodes, string path)
+        {
+            foreach (TreeNode node in nodes)
+            {
+                if (node.Tag == null) {
+                    continue;
+                }
+                else if(node.Tag.ToString().Equals(path))
+                {
+                    return node;
+                }
+                else if (Directory.Exists(node.Tag.ToString()))
+                {
+                    TreeNode? match = null;
+                    match = FindNode(node.Nodes, path);
+                    if (match != null)
+                    {
+                        return match;
+                    }
+                }
+            }
+            return null;
+        }
     }
 }

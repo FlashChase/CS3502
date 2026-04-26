@@ -8,7 +8,26 @@ namespace Project_3
         {
             InitializeComponent();
 
-            FileOps.BuildFileTree(tvDir);
+            this.Shown += Form1_Shown;
+
+            tvDir.BeforeExpand += tvDir_BeforeExpand;
+            tvDir.NodeMouseDoubleClick += tvDir_NodeMouseDoubleClick;
+        }
+
+        TreeNode? currentDirectoryNode;
+
+        private void Form1_Shown(object Sender, EventArgs e)
+        {
+            try
+            {
+                FileOps.BuildTreeLevel(tvDir);
+                currentDirectoryNode = tvDir.Nodes[0];
+                tvDir.SelectedNode = tvDir.Nodes[0];
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "BuildTreeLevel Error");
+            }
         }
 
         private void ShowControl(Control showControl)
@@ -31,30 +50,49 @@ namespace Project_3
             if (showControl == rtbFileText)
             {
                 btnEdit.Visible = true;
+                this.AcceptButton = btnEdit;
             }
 
             showControl.BringToFront();
             showControl.Visible = true;
         }
 
+        private void tvDir_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        {
+            tvDir.SelectedNode = e.Node;
+
+            FileOps.AddChildren(e.Node);
+
+            tvDir.Refresh();
+        }
+
         private void tvDir_AfterSelect(object sender, TreeViewEventArgs e)
         {
+            if (tblSearchResults.Visible)
+            {
+                return;
+            }
             string path = tvDir.SelectedNode.Tag as string;
             if (File.Exists(path))
             {
+                currentDirectoryNode = tvDir.SelectedNode.Parent;
                 ShowControl(lstFileInfo);
                 FileOps.DisplayFileProperties(lstFileInfo, path);
                 btnReadFile.Visible = true;
             }
             else if (Directory.Exists(path))
             {
+                currentDirectoryNode = tvDir.SelectedNode;
                 ShowControl(lstFileInfo);
             }
-
-
         }
 
         private void btnReadFile_Click(object sender, EventArgs e)
+        {
+            ReadFile(tvDir.SelectedNode);
+        }
+
+        private void ReadFile(TreeNode node)
         {
             string? file = tvDir.SelectedNode.Tag as string;
 
@@ -72,8 +110,8 @@ namespace Project_3
             }
             else
             {
-                string fileText = FileOps.ReadFile(file);
-                if (!fileText.Equals("90210Error&"))
+                string? fileText = FileOps.ReadFile(file);
+                if (fileText != null)
                 {
                     ShowControl(rtbFileText);
                     rtbFileText.Text = fileText;
@@ -85,6 +123,7 @@ namespace Project_3
         {
             rtbFileText.ReadOnly = false;
             btnSave.Visible = true;
+            this.AcceptButton = btnSave;
         }
 
         private void btnSave_Click(object sender, EventArgs e)
@@ -95,7 +134,17 @@ namespace Project_3
 
             if (result == DialogResult.Yes)
             {
-                FileOps.WriteFile(rtbFileText.Text, tvDir.SelectedNode.Tag as string);
+                TreeNode? node = tvDir.SelectedNode;
+                if (node != null)
+                {
+                    FileOps.WriteFile(rtbFileText.Text, node);
+                }
+                else
+                {
+                    node = tvDir.Nodes[0];
+                    FileOps.WriteFile(rtbFileText.Text, node);
+                }
+                tvDir.Refresh();
             }
         }
 
@@ -103,42 +152,72 @@ namespace Project_3
         {
             ShowControl(lstFileInfo);
 
-            string path = FileOps.GetParentDirectory(tvDir);
+            string? path = FileOps.GetParentDirectory(tvDir);
 
-            tvDir.Nodes.Clear();
+            if (path != null)
+            {
 
-            FileOps.BuildFileTree(tvDir, path);
+                tvDir.Nodes.Clear();
+
+                FileOps.BuildTreeLevel(tvDir, path);
+                tvDir.SelectedNode = tvDir.Nodes[0];
+            }
+            else
+            {
+                MessageBox.Show("Already at the root of the file structure");
+            }
         }
 
         private void btnDirDown_Click(object sender, EventArgs e)
         {
             ShowControl(lstFileInfo);
 
-            string path = null;
+            string path;
 
-            if (tvDir.SelectedNode != null && tvDir.SelectedNode.Tag != null && Directory.Exists(tvDir.SelectedNode.Tag.ToString()))
-            {
-                path = tvDir.SelectedNode.Tag.ToString();
-                tvDir.Nodes.Clear();
-                FileOps.BuildFileTree(tvDir, path);
-
-            }
-            else
+            if (tvDir.SelectedNode == null)
             {
                 path = FileOps.GetFirstSubDirectory(tvDir, 0);
                 if (path != null)
                 {
                     tvDir.Nodes.Clear();
-                    FileOps.BuildFileTree(tvDir, path);
+                    FileOps.BuildTreeLevel(tvDir, path);
+                    tvDir.SelectedNode = tvDir.Nodes[0];
                 }
+                return;
             }
 
+            path = tvDir.SelectedNode.Tag.ToString();
 
+            if (tvDir.SelectedNode == tvDir.Nodes[0])
+            {
+                path = FileOps.GetFirstSubDirectory(tvDir, 0);
+                if (path != null)
+                {
+                    FileOps.BuildTreeLevel(tvDir, path);
+                    tvDir.SelectedNode = tvDir.Nodes[0];
+                }
+            }
+            else if (File.Exists(path))
+            {
+                MessageBox.Show("Selected file is not a directory");
+            }
+            else if (Directory.Exists(path))
+            {
+                FileOps.BuildTreeLevel(tvDir, path);
+                tvDir.SelectedNode = tvDir.Nodes[0];
+            }
         }
 
         private void btnSearch_Click(object sender, EventArgs e)
         {
+            if (txtSearch.Text == "")
+            {
+                MessageBox.Show("No search criteria entered");
+                return;
+            }
             ShowControl(tblSearchResults);
+
+            FileOps.BuildFullTree(tvDir, currentDirectoryNode);
 
             List<TreeNode> searchResults = new List<TreeNode>();
             FileOps.SearchForFile(txtSearch.Text, tvDir.Nodes[0], searchResults);
@@ -193,6 +272,18 @@ namespace Project_3
 
             rtbFileText.Text = FileOps.ReadFile(label.Tag.ToString());
 
+            if (rtbFileText.Text == null)
+            {
+                return;
+            }
+
+            this.AcceptButton = btnEdit;
+
+            TreeNode node = FileOps.FindNode(tvDir.Nodes, label.Tag.ToString());
+
+            tvDir.SelectedNode = node;
+            tvDir.Focus();
+
             btnReadFile.Visible = false;
         }
 
@@ -210,40 +301,118 @@ namespace Project_3
 
         }
 
-        private void btnCreate_Click(object sender, EventArgs e)
+        private void btnCreateFile_Click(object sender, EventArgs e)
         {
             if (tvDir.SelectedNode == null)
             {
                 txtCurrentDirectory.Text = FileOps.GetCurrentDirectory(tvDir.Nodes[0].Tag.ToString());
             }
-            else 
+            else
             {
                 txtCurrentDirectory.Text = FileOps.GetCurrentDirectory(tvDir.SelectedNode.Tag.ToString());
-                
             }
 
+            lblNewFileName.Text = "New Filename:";
             ShowControl(pnlCreate);
+
+            txtNewFileName.Focus();
+            this.AcceptButton = btnCreateAndOpen;
+        }
+
+        private void btnCreateFolder_Click(object sender, EventArgs e)
+        {
+            if (tvDir.SelectedNode == null)
+            {
+                txtCurrentDirectory.Text = FileOps.GetCurrentDirectory(tvDir.Nodes[0].Tag.ToString());
+            }
+            else
+            {
+                txtCurrentDirectory.Text = FileOps.GetCurrentDirectory(tvDir.SelectedNode.Tag.ToString());
+            }
+
+            lblNewFileName.Text = "New Folder Name:";
+            ShowControl(pnlCreate);
+
+            txtNewFileName.Focus();
+            this.AcceptButton = btnCreateAndOpen;
         }
 
 
 
         private void btnCreateAndOpen_Click(object sender, EventArgs e)
         {
-            string newFilePath = null;
-            string fileName = txtNewFileName.Text;
-
-            if (fileName == "")
+            if (lblNewFileName.Text.Contains("File"))
             {
-                MessageBox.Show("File must have a name");
-                return;
+                // Store contents of filename textbox
+                string fileName = txtNewFileName.Text;
+
+                // Ensure file name was entered
+                if (fileName == "")
+                {
+                    MessageBox.Show("File must have a name");
+                    return;
+                }
+
+                TreeNode? newNode = null;
+                newNode = FileOps.CreateFile(txtNewFileName.Text, txtCurrentDirectory.Text, tvDir.Nodes);
+                tvDir.SelectedNode = newNode;
+                tvDir.Refresh();
+                txtNewFileName.Clear();
+
+                if (tvDir.SelectedNode != null)
+                {
+                    ShowControl(rtbFileText);
+                    rtbFileText.ReadOnly = false;
+                    rtbFileText.Focus();
+                    btnSave.Visible = true;
+                    this.AcceptButton = btnSave;
+                }
             }
-
-            // Create File
-            newFilePath = FileOps.CreateFile(txtNewFileName.Text, txtCurrentDirectory.Text, tvDir.SelectedNode);
-
-            if (newFilePath != null)
+            else
             {
-                ShowControl(rtbFileText);
+                // Store contents of filename textbox
+                string directoryName = txtNewFileName.Text;
+
+                // Ensure file name was entered
+                if (directoryName == "")
+                {
+                    MessageBox.Show("Directory must have a name");
+                    return;
+                }
+
+                TreeNode? newNode = null;
+                newNode = FileOps.CreateDirectory(txtNewFileName.Text, txtCurrentDirectory.Text, tvDir.Nodes);
+                tvDir.SelectedNode = newNode;
+                tvDir.Refresh();
+                txtNewFileName.Clear();
+            }           
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            TreeNode node = tvDir.SelectedNode;
+            FileOps.DeleteFile(tvDir.SelectedNode);
+            tvDir.Refresh();
+
+        }
+
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            this.AcceptButton = btnSearch;
+        }
+
+        private void tvDir_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            TreeNode node = e.Node;
+            string path = node.Tag.ToString();
+
+            if (Directory.Exists(path))
+            {
+                FileOps.BuildTreeLevel(tvDir, path);
+            }
+            else if (File.Exists(path))
+            {
+                ReadFile(node);
             }
         }
     }

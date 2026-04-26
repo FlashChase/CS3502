@@ -32,13 +32,13 @@
             pnlMiddle = new Panel();
             splitContainer1 = new SplitContainer();
             tvDir = new TreeView();
+            lstFileInfo = new ListBox();
             pnlCreate = new Panel();
             btnCreateAndOpen = new Button();
             txtNewFileName = new TextBox();
             lblNewFileName = new Label();
             txtCurrentDirectory = new TextBox();
             lblCurrentDirectory = new Label();
-            lstFileInfo = new ListBox();
             tblSearchResults = new TableLayoutPanel();
             rtbFileText = new RichTextBox();
             pnlTop = new Panel();
@@ -47,7 +47,9 @@
             btnDirDown = new Button();
             btnDirUp = new Button();
             pnlBottom = new Panel();
-            btnCreate = new Button();
+            btnCreateFolder = new Button();
+            btnDelete = new Button();
+            btnCreateFile = new Button();
             btnSave = new Button();
             btnEdit = new Button();
             btnReadFile = new Button();
@@ -98,8 +100,8 @@
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.BackColor = Color.White;
-            splitContainer1.Panel2.Controls.Add(pnlCreate);
             splitContainer1.Panel2.Controls.Add(lstFileInfo);
+            splitContainer1.Panel2.Controls.Add(pnlCreate);
             splitContainer1.Panel2.Controls.Add(tblSearchResults);
             splitContainer1.Panel2.Controls.Add(rtbFileText);
             splitContainer1.Panel2.Margin = new Padding(0, 0, 3, 0);
@@ -115,7 +117,20 @@
             tvDir.Size = new Size(331, 330);
             tvDir.TabIndex = 0;
             tvDir.AfterSelect += tvDir_AfterSelect;
-            tvDir.DoubleClick += btnReadFile_Click;
+            // 
+            // lstFileInfo
+            // 
+            lstFileInfo.BackColor = Color.White;
+            lstFileInfo.Dock = DockStyle.Fill;
+            lstFileInfo.ForeColor = Color.Black;
+            lstFileInfo.FormattingEnabled = true;
+            lstFileInfo.IntegralHeight = false;
+            lstFileInfo.ItemHeight = 15;
+            lstFileInfo.Location = new Point(0, 0);
+            lstFileInfo.Margin = new Padding(0);
+            lstFileInfo.Name = "lstFileInfo";
+            lstFileInfo.Size = new Size(445, 330);
+            lstFileInfo.TabIndex = 0;
             // 
             // pnlCreate
             // 
@@ -172,20 +187,6 @@
             lblCurrentDirectory.Size = new Size(101, 15);
             lblCurrentDirectory.TabIndex = 0;
             lblCurrentDirectory.Text = "Current Directory:";
-            // 
-            // lstFileInfo
-            // 
-            lstFileInfo.BackColor = Color.White;
-            lstFileInfo.Dock = DockStyle.Fill;
-            lstFileInfo.ForeColor = Color.Black;
-            lstFileInfo.FormattingEnabled = true;
-            lstFileInfo.IntegralHeight = false;
-            lstFileInfo.ItemHeight = 15;
-            lstFileInfo.Location = new Point(0, 0);
-            lstFileInfo.Margin = new Padding(0);
-            lstFileInfo.Name = "lstFileInfo";
-            lstFileInfo.Size = new Size(445, 330);
-            lstFileInfo.TabIndex = 0;
             // 
             // tblSearchResults
             // 
@@ -244,6 +245,7 @@
             txtSearch.Name = "txtSearch";
             txtSearch.Size = new Size(264, 25);
             txtSearch.TabIndex = 1;
+            txtSearch.TextChanged += txtSearch_TextChanged;
             txtSearch.KeyDown += txtSearch_KeyDown;
             // 
             // btnDirDown
@@ -268,7 +270,9 @@
             // 
             // pnlBottom
             // 
-            pnlBottom.Controls.Add(btnCreate);
+            pnlBottom.Controls.Add(btnCreateFolder);
+            pnlBottom.Controls.Add(btnDelete);
+            pnlBottom.Controls.Add(btnCreateFile);
             pnlBottom.Controls.Add(btnSave);
             pnlBottom.Controls.Add(btnEdit);
             pnlBottom.Controls.Add(btnReadFile);
@@ -278,15 +282,35 @@
             pnlBottom.Size = new Size(800, 51);
             pnlBottom.TabIndex = 6;
             // 
-            // btnCreate
+            // btnCreateFolder
             // 
-            btnCreate.Location = new Point(184, 11);
-            btnCreate.Name = "btnCreate";
-            btnCreate.Size = new Size(136, 28);
-            btnCreate.TabIndex = 6;
-            btnCreate.Text = "Create";
-            btnCreate.UseVisualStyleBackColor = true;
-            btnCreate.Click += btnCreate_Click;
+            btnCreateFolder.Location = new Point(288, 11);
+            btnCreateFolder.Name = "btnCreateFolder";
+            btnCreateFolder.Size = new Size(86, 29);
+            btnCreateFolder.TabIndex = 8;
+            btnCreateFolder.Text = "Create Folder";
+            btnCreateFolder.UseVisualStyleBackColor = true;
+            btnCreateFolder.Click += btnCreateFolder_Click;
+            // 
+            // btnDelete
+            // 
+            btnDelete.Location = new Point(104, 11);
+            btnDelete.Name = "btnDelete";
+            btnDelete.Size = new Size(86, 29);
+            btnDelete.TabIndex = 7;
+            btnDelete.Text = "Delete";
+            btnDelete.UseVisualStyleBackColor = true;
+            btnDelete.Click += btnDelete_Click;
+            // 
+            // btnCreateFile
+            // 
+            btnCreateFile.Location = new Point(196, 11);
+            btnCreateFile.Name = "btnCreateFile";
+            btnCreateFile.Size = new Size(86, 29);
+            btnCreateFile.TabIndex = 6;
+            btnCreateFile.Text = "Create File";
+            btnCreateFile.UseVisualStyleBackColor = true;
+            btnCreateFile.Click += btnCreateFile_Click;
             // 
             // btnSave
             // 
@@ -314,9 +338,9 @@
             // 
             btnReadFile.Location = new Point(12, 11);
             btnReadFile.Name = "btnReadFile";
-            btnReadFile.Size = new Size(136, 28);
+            btnReadFile.Size = new Size(86, 29);
             btnReadFile.TabIndex = 3;
-            btnReadFile.Text = "View Contents";
+            btnReadFile.Text = "Read File";
             btnReadFile.UseVisualStyleBackColor = true;
             btnReadFile.Click += btnReadFile_Click;
             // 
@@ -361,12 +385,14 @@
         private Button btnSave;
         private Button btnEdit;
         private TableLayoutPanel tblSearchResults;
-        private Button btnCreate;
+        private Button btnCreateFile;
         private Panel pnlCreate;
         private Label lblNewFileName;
         private TextBox txtCurrentDirectory;
         private Label lblCurrentDirectory;
         private TextBox txtNewFileName;
         private Button btnCreateAndOpen;
+        private Button btnDelete;
+        private Button btnCreateFolder;
     }
 }
