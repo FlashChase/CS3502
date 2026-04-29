@@ -12,6 +12,7 @@ namespace Project_3
 
             tvDir.BeforeExpand += tvDir_BeforeExpand;
             tvDir.NodeMouseDoubleClick += tvDir_NodeMouseDoubleClick;
+            tvDir.AfterSelect += tvDir_AfterSelect;
         }
 
         TreeNode? currentDirectoryNode;
@@ -20,9 +21,20 @@ namespace Project_3
         {
             try
             {
+                ImageList imageList = new ImageList();
+                imageList.Images.Add("folder", Image.FromFile("FolderIcon.png"));
+                imageList.Images.Add("file", Image.FromFile("FileIcon.png"));
+                tvDir.ImageList = imageList;
+
+                btnDirUp.Image = Image.FromFile("ArrowUp.png");
+                btnDirDown.Image = Image.FromFile("ArrowDown.png");
+
                 FileOps.BuildTreeLevel(tvDir);
                 currentDirectoryNode = tvDir.Nodes[0];
                 tvDir.SelectedNode = tvDir.Nodes[0];
+
+                lstFileInfo.Visible = true;
+
             }
             catch (Exception ex)
             {
@@ -73,6 +85,8 @@ namespace Project_3
                 return;
             }
             string path = tvDir.SelectedNode.Tag as string;
+            string name = tvDir.SelectedNode.Text;
+            lblNode.Text = name;
             if (File.Exists(path))
             {
                 currentDirectoryNode = tvDir.SelectedNode.Parent;
@@ -238,6 +252,7 @@ namespace Project_3
         /// <param name="searchResults"></param>
         private void DisplaySearchResults(List<TreeNode> searchResults)
         {
+            // Create header labels
             Label label = new Label();
             label.Text = "Name";
             tblSearchResults.Controls.Add(label, 0, 0);
@@ -246,12 +261,19 @@ namespace Project_3
             label2.Text = "Folder";
             tblSearchResults.Controls.Add(label2, 1, 0);
 
+            // Iterate of each cell in the table and add info from search results
             for (int row = 1; row <= searchResults.Count; row++)
             {
+                tblSearchResults.RowCount++;
+                tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+
                 Label nameLabel = new Label();
                 nameLabel.DoubleClick += lblSearchResults_DoubleClick;
                 nameLabel.Text = Path.GetFileName(searchResults[row - 1].Tag.ToString());
                 nameLabel.Tag = searchResults[row - 1].Tag.ToString();
+                nameLabel.AutoSize = false;
+                nameLabel.Dock = DockStyle.Fill;
+                nameLabel.TextAlign = ContentAlignment.MiddleLeft;
                 tblSearchResults.Controls.Add(nameLabel, 0, row);
 
                 for (int col = 1; col < 2; col++)
@@ -259,9 +281,13 @@ namespace Project_3
                     Label typeLabel = new Label();
                     typeLabel.DoubleClick += lblSearchResults_DoubleClick;
                     typeLabel.Text = Path.GetFileNameWithoutExtension(searchResults[row - 1].Parent.Tag.ToString());
+                    typeLabel.AutoSize = false;
+                    typeLabel.Dock = DockStyle.Fill;
+                    typeLabel.TextAlign = ContentAlignment.MiddleLeft;
                     tblSearchResults.Controls.Add(typeLabel, col, row);
                 }
             }
+
         }
 
         private void lblSearchResults_DoubleClick(object sender, EventArgs e)
@@ -385,14 +411,21 @@ namespace Project_3
                 tvDir.SelectedNode = newNode;
                 tvDir.Refresh();
                 txtNewFileName.Clear();
-            }           
+            }
         }
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
             TreeNode node = tvDir.SelectedNode;
-            FileOps.DeleteFile(tvDir.SelectedNode);
-            tvDir.Refresh();
+            if (node != null)
+            {
+                FileOps.DeleteFile(tvDir.SelectedNode);
+                tvDir.Refresh();
+            }
+            else
+            {
+                MessageBox.Show("No file or folder selected");
+            }
 
         }
 
@@ -415,5 +448,6 @@ namespace Project_3
                 ReadFile(node);
             }
         }
+
     }
 }

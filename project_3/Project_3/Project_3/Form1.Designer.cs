@@ -32,16 +32,18 @@
             pnlMiddle = new Panel();
             splitContainer1 = new SplitContainer();
             tvDir = new TreeView();
-            lstFileInfo = new ListBox();
+            tblSearchResults = new TableLayoutPanel();
             pnlCreate = new Panel();
             btnCreateAndOpen = new Button();
             txtNewFileName = new TextBox();
             lblNewFileName = new Label();
             txtCurrentDirectory = new TextBox();
             lblCurrentDirectory = new Label();
-            tblSearchResults = new TableLayoutPanel();
+            lstFileInfo = new ListBox();
             rtbFileText = new RichTextBox();
             pnlTop = new Panel();
+            lblNode = new Label();
+            label1 = new Label();
             btnSearch = new Button();
             txtSearch = new TextBox();
             btnDirDown = new Button();
@@ -100,13 +102,13 @@
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.BackColor = Color.White;
-            splitContainer1.Panel2.Controls.Add(lstFileInfo);
-            splitContainer1.Panel2.Controls.Add(pnlCreate);
             splitContainer1.Panel2.Controls.Add(tblSearchResults);
+            splitContainer1.Panel2.Controls.Add(pnlCreate);
+            splitContainer1.Panel2.Controls.Add(lstFileInfo);
             splitContainer1.Panel2.Controls.Add(rtbFileText);
             splitContainer1.Panel2.Margin = new Padding(0, 0, 3, 0);
             splitContainer1.Size = new Size(780, 330);
-            splitContainer1.SplitterDistance = 331;
+            splitContainer1.SplitterDistance = 345;
             splitContainer1.TabIndex = 0;
             // 
             // tvDir
@@ -114,23 +116,27 @@
             tvDir.Dock = DockStyle.Fill;
             tvDir.Location = new Point(0, 0);
             tvDir.Name = "tvDir";
-            tvDir.Size = new Size(331, 330);
+            tvDir.Size = new Size(345, 330);
             tvDir.TabIndex = 0;
             tvDir.AfterSelect += tvDir_AfterSelect;
             // 
-            // lstFileInfo
+            // tblSearchResults
             // 
-            lstFileInfo.BackColor = Color.White;
-            lstFileInfo.Dock = DockStyle.Fill;
-            lstFileInfo.ForeColor = Color.Black;
-            lstFileInfo.FormattingEnabled = true;
-            lstFileInfo.IntegralHeight = false;
-            lstFileInfo.ItemHeight = 15;
-            lstFileInfo.Location = new Point(0, 0);
-            lstFileInfo.Margin = new Padding(0);
-            lstFileInfo.Name = "lstFileInfo";
-            lstFileInfo.Size = new Size(445, 330);
-            lstFileInfo.TabIndex = 0;
+            tblSearchResults.AutoScroll = true;
+            tblSearchResults.ColumnCount = 2;
+            tblSearchResults.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50.6976738F));
+            tblSearchResults.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 49.3023262F));
+            tblSearchResults.Dock = DockStyle.Fill;
+            tblSearchResults.Location = new Point(0, 0);
+            tblSearchResults.Name = "tblSearchResults";
+            tblSearchResults.RowCount = 2;
+            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            tblSearchResults.Size = new Size(431, 330);
+            tblSearchResults.TabIndex = 1;
+            tblSearchResults.Visible = false;
             // 
             // pnlCreate
             // 
@@ -143,12 +149,12 @@
             pnlCreate.Dock = DockStyle.Fill;
             pnlCreate.Location = new Point(0, 0);
             pnlCreate.Name = "pnlCreate";
-            pnlCreate.Size = new Size(445, 330);
+            pnlCreate.Size = new Size(431, 330);
             pnlCreate.TabIndex = 7;
             // 
             // btnCreateAndOpen
             // 
-            btnCreateAndOpen.Location = new Point(142, 142);
+            btnCreateAndOpen.Location = new Point(142, 148);
             btnCreateAndOpen.Name = "btnCreateAndOpen";
             btnCreateAndOpen.Size = new Size(161, 91);
             btnCreateAndOpen.TabIndex = 4;
@@ -158,15 +164,15 @@
             // 
             // txtNewFileName
             // 
-            txtNewFileName.Location = new Point(106, 69);
+            txtNewFileName.Location = new Point(106, 75);
             txtNewFileName.Name = "txtNewFileName";
-            txtNewFileName.Size = new Size(334, 23);
+            txtNewFileName.Size = new Size(325, 23);
             txtNewFileName.TabIndex = 3;
             // 
             // lblNewFileName
             // 
             lblNewFileName.AutoSize = true;
-            lblNewFileName.Location = new Point(4, 72);
+            lblNewFileName.Location = new Point(4, 78);
             lblNewFileName.Name = "lblNewFileName";
             lblNewFileName.Size = new Size(90, 15);
             lblNewFileName.TabIndex = 2;
@@ -175,9 +181,12 @@
             // txtCurrentDirectory
             // 
             txtCurrentDirectory.Location = new Point(106, 17);
+            txtCurrentDirectory.Multiline = true;
             txtCurrentDirectory.Name = "txtCurrentDirectory";
-            txtCurrentDirectory.Size = new Size(334, 23);
+            txtCurrentDirectory.ScrollBars = ScrollBars.Horizontal;
+            txtCurrentDirectory.Size = new Size(325, 42);
             txtCurrentDirectory.TabIndex = 1;
+            txtCurrentDirectory.WordWrap = false;
             // 
             // lblCurrentDirectory
             // 
@@ -188,22 +197,19 @@
             lblCurrentDirectory.TabIndex = 0;
             lblCurrentDirectory.Text = "Current Directory:";
             // 
-            // tblSearchResults
+            // lstFileInfo
             // 
-            tblSearchResults.AutoScroll = true;
-            tblSearchResults.ColumnCount = 2;
-            tblSearchResults.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tblSearchResults.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tblSearchResults.Dock = DockStyle.Fill;
-            tblSearchResults.Location = new Point(0, 0);
-            tblSearchResults.Name = "tblSearchResults";
-            tblSearchResults.RowCount = 2;
-            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tblSearchResults.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tblSearchResults.Size = new Size(445, 330);
-            tblSearchResults.TabIndex = 1;
+            lstFileInfo.BackColor = Color.White;
+            lstFileInfo.Dock = DockStyle.Fill;
+            lstFileInfo.ForeColor = Color.Black;
+            lstFileInfo.FormattingEnabled = true;
+            lstFileInfo.IntegralHeight = false;
+            lstFileInfo.ItemHeight = 15;
+            lstFileInfo.Location = new Point(0, 0);
+            lstFileInfo.Margin = new Padding(0);
+            lstFileInfo.Name = "lstFileInfo";
+            lstFileInfo.Size = new Size(431, 330);
+            lstFileInfo.TabIndex = 0;
             // 
             // rtbFileText
             // 
@@ -212,12 +218,14 @@
             rtbFileText.Location = new Point(0, 0);
             rtbFileText.Name = "rtbFileText";
             rtbFileText.ReadOnly = true;
-            rtbFileText.Size = new Size(445, 330);
+            rtbFileText.Size = new Size(431, 330);
             rtbFileText.TabIndex = 0;
             rtbFileText.Text = "";
             // 
             // pnlTop
             // 
+            pnlTop.Controls.Add(lblNode);
+            pnlTop.Controls.Add(label1);
             pnlTop.Controls.Add(btnSearch);
             pnlTop.Controls.Add(txtSearch);
             pnlTop.Controls.Add(btnDirDown);
@@ -227,6 +235,23 @@
             pnlTop.Name = "pnlTop";
             pnlTop.Size = new Size(800, 49);
             pnlTop.TabIndex = 4;
+            // 
+            // lblNode
+            // 
+            lblNode.Location = new Point(171, 10);
+            lblNode.Name = "lblNode";
+            lblNode.Size = new Size(170, 33);
+            lblNode.TabIndex = 7;
+            lblNode.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // label1
+            // 
+            label1.Location = new Point(104, 10);
+            label1.Name = "label1";
+            label1.Size = new Size(61, 33);
+            label1.TabIndex = 6;
+            label1.Text = "Current Selection:";
+            label1.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // btnSearch
             // 
@@ -250,21 +275,20 @@
             // 
             // btnDirDown
             // 
-            btnDirDown.Location = new Point(153, 7);
+            btnDirDown.Location = new Point(58, 6);
             btnDirDown.Name = "btnDirDown";
-            btnDirDown.Size = new Size(46, 33);
+            btnDirDown.Size = new Size(40, 35);
             btnDirDown.TabIndex = 5;
-            btnDirDown.Text = "Down";
             btnDirDown.UseVisualStyleBackColor = true;
             btnDirDown.Click += btnDirDown_Click;
             // 
             // btnDirUp
             // 
-            btnDirUp.Location = new Point(90, 7);
+            btnDirUp.ImageKey = "(none)";
+            btnDirUp.Location = new Point(12, 6);
             btnDirUp.Name = "btnDirUp";
-            btnDirUp.Size = new Size(46, 33);
+            btnDirUp.Size = new Size(40, 35);
             btnDirUp.TabIndex = 4;
-            btnDirUp.Text = "Up";
             btnDirUp.UseVisualStyleBackColor = true;
             btnDirUp.Click += btnDirUp_Click;
             // 
@@ -284,9 +308,9 @@
             // 
             // btnCreateFolder
             // 
-            btnCreateFolder.Location = new Point(288, 11);
+            btnCreateFolder.Location = new Point(182, 11);
             btnCreateFolder.Name = "btnCreateFolder";
-            btnCreateFolder.Size = new Size(86, 29);
+            btnCreateFolder.Size = new Size(85, 30);
             btnCreateFolder.TabIndex = 8;
             btnCreateFolder.Text = "Create Folder";
             btnCreateFolder.UseVisualStyleBackColor = true;
@@ -294,9 +318,9 @@
             // 
             // btnDelete
             // 
-            btnDelete.Location = new Point(104, 11);
+            btnDelete.Location = new Point(268, 11);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(86, 29);
+            btnDelete.Size = new Size(85, 30);
             btnDelete.TabIndex = 7;
             btnDelete.Text = "Delete";
             btnDelete.UseVisualStyleBackColor = true;
@@ -304,9 +328,9 @@
             // 
             // btnCreateFile
             // 
-            btnCreateFile.Location = new Point(196, 11);
+            btnCreateFile.Location = new Point(96, 11);
             btnCreateFile.Name = "btnCreateFile";
-            btnCreateFile.Size = new Size(86, 29);
+            btnCreateFile.Size = new Size(85, 30);
             btnCreateFile.TabIndex = 6;
             btnCreateFile.Text = "Create File";
             btnCreateFile.UseVisualStyleBackColor = true;
@@ -336,9 +360,9 @@
             // 
             // btnReadFile
             // 
-            btnReadFile.Location = new Point(12, 11);
+            btnReadFile.Location = new Point(10, 10);
             btnReadFile.Name = "btnReadFile";
-            btnReadFile.Size = new Size(86, 29);
+            btnReadFile.Size = new Size(85, 30);
             btnReadFile.TabIndex = 3;
             btnReadFile.Text = "Read File";
             btnReadFile.UseVisualStyleBackColor = true;
@@ -394,5 +418,7 @@
         private Button btnCreateAndOpen;
         private Button btnDelete;
         private Button btnCreateFolder;
+        private Label label1;
+        private Label lblNode;
     }
 }

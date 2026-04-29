@@ -33,6 +33,8 @@ namespace Project_3
             // Create root node with filename display and full path as tag
             TreeNode rootNode = new TreeNode(Path.GetFileName(path));
             rootNode.Tag = path;
+            rootNode.ImageKey = "folder";
+            rootNode.SelectedImageKey = "folder";
 
             tvDir.Nodes.Add(rootNode);
 
@@ -43,6 +45,8 @@ namespace Project_3
             {
                 TreeNode newNode = new TreeNode(Path.GetFileName(directory));
                 newNode.Tag = directory;
+                newNode.ImageKey = "folder";
+                newNode.SelectedImageKey = "folder";
 
                 rootNode.Nodes.Add(newNode);
 
@@ -67,6 +71,8 @@ namespace Project_3
             {
                 TreeNode newNode = new TreeNode(Path.GetFileName(file));
                 newNode.Tag = file;
+                newNode.ImageKey = "file";
+                newNode.SelectedImageKey = "file";
 
                 rootNode.Nodes.Add(newNode);
             }
@@ -90,6 +96,8 @@ namespace Project_3
             // Create root node with filename display and full path as tag
             TreeNode rootNode = new TreeNode(Path.GetFileName(rootPath));
             rootNode.Tag = rootPath;
+            rootNode.ImageKey = "folder";
+            rootNode.SelectedImageKey = "folder";
 
             tvDir.Nodes.Clear();
 
@@ -102,6 +110,8 @@ namespace Project_3
             {
                 TreeNode newNode = new TreeNode(Path.GetFileName(directory));
                 newNode.Tag = directory;
+                newNode.ImageKey = "folder";
+                newNode.SelectedImageKey = "folder";
 
                 rootNode.Nodes.Add(newNode);
 
@@ -126,6 +136,9 @@ namespace Project_3
             {
                 TreeNode newNode = new TreeNode(Path.GetFileName(file));
                 newNode.Tag = file;
+                newNode.ImageKey = "file";
+                newNode.SelectedImageKey = "file";
+
 
                 rootNode.Nodes.Add(newNode);
             }
@@ -538,8 +551,6 @@ namespace Project_3
             {
                 MessageBox.Show(e.Message);
             }
-
-            MessageBox.Show("Reached end of method, returning null");
             return null;
         }
 
@@ -581,8 +592,6 @@ namespace Project_3
             {
                 MessageBox.Show(e.Message);
             }
-
-            MessageBox.Show("Reached end of method, returning null");
             return null;
         }
 
@@ -602,6 +611,7 @@ namespace Project_3
                     try
                     {
                         File.Delete(path);
+                        node.Remove();
                     }
                     catch (UnauthorizedAccessException e)
                     {
@@ -621,6 +631,7 @@ namespace Project_3
                     try
                     {
                         File.Delete(file);
+                        node.Remove();
                     }
                     catch (UnauthorizedAccessException e)
                     {
@@ -653,8 +664,6 @@ namespace Project_3
                     MessageBox.Show("Directory contains multiple files that cannot be deleted");
                 }
             }
-
-            node.Remove();
         }
 
         private static int RecursiveDelete(string path)
