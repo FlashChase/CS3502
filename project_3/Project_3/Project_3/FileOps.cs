@@ -775,31 +775,16 @@ namespace Project_3
                             ++fails;
                         }
                     }
-                    else if (Directory.Exists(path) && node.Nodes[i].Nodes.Count == 1 && node.Nodes[i].Nodes[0].Text.Equals("DUMMY"))
+                    else if (Directory.Exists(path))
                     {
-                        AddChildren(node.Nodes[i]);
-                        fails += RecursiveDelete(node.Nodes[i]);
-                    }
-                    else
-                    {
-                        if (Directory.Exists(path))
+                        TreeNode child = node.Nodes[i];
+
+                        if (child.Nodes.Count == 1 && child.Nodes[0].Text.Equals("DUMMY"))
                         {
-                            try
-                            {
-                                Directory.Delete(path);
-                                node.Nodes[i].Remove();
-                            }
-                            catch (UnauthorizedAccessException e)
-                            {
-                                MessageBox.Show(e.Message);
-                                return ++fails;
-                            }
-                            catch (IOException e)
-                            {
-                                MessageBox.Show(e.Message);
-                                return ++fails;
-                            }
+                            AddChildren(child);
                         }
+
+                        fails += RecursiveDelete(child);
                     }
                 }
             }
