@@ -389,7 +389,10 @@ namespace Project_3
                 TreeNode? newNode = null;
                 newNode = FileOps.CreateFile(txtNewFileName.Text, txtCurrentDirectory.Text, tvDir.Nodes);
                 tvDir.SelectedNode = newNode;
-                tvDir.Refresh();
+                newNode.Parent?.Expand();      
+                tvDir.SelectedNode = newNode;  
+                newNode.EnsureVisible();   
+                tvDir.Focus();                 
                 txtNewFileName.Clear();
 
                 if (tvDir.SelectedNode != null)
