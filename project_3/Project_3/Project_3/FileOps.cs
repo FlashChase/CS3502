@@ -2,6 +2,7 @@
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -38,8 +39,18 @@ namespace Project_3
 
             tvDir.Nodes.Add(rootNode);
 
-            string[] files = Directory.GetFiles(path);
-            string[] directories = Directory.GetDirectories(path);
+            string[] files;
+            string[] directories;
+            try
+            {
+                directories = Directory.GetDirectories(path);
+                files = Directory.GetFiles(path);
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                MessageBox.Show(e.Message);
+                return;
+            }
 
             foreach (string directory in directories)
             {
@@ -80,16 +91,23 @@ namespace Project_3
             rootNode.Expand();
         }
 
+        /// <summary>
+        /// Builds the full file tree in the TreeView from argument note or TreeView root
+        /// </summary>
+        /// <param name="tvDir"></param>
+        /// <param name="node"></param>
         public static void BuildFullTree(TreeView tvDir, TreeNode node = null)
         {
             string rootPath;
 
             if (node == null)
             {
+                if (tvDir.Nodes.Count == 0 || tvDir.Nodes[0].Tag == null) { return; }
                 rootPath = tvDir.Nodes[0].Tag.ToString();
             }
             else
             {
+                if (node.Tag == null) { return; }
                 rootPath = node.Tag.ToString();
             }
 
@@ -103,8 +121,18 @@ namespace Project_3
 
             tvDir.Nodes.Add(rootNode);
 
-            string[] files = Directory.GetFiles(rootPath);
-            string[] directories = Directory.GetDirectories(rootPath);
+            string[] files;
+            string[] directories;
+            try
+            {   
+                files = Directory.GetFiles(rootPath);
+                directories = Directory.GetDirectories(rootPath);
+            }          
+            catch (UnauthorizedAccessException e)
+            {
+                MessageBox.Show(e.Message);
+                return;
+            }
 
             foreach (string directory in directories)
             {
@@ -146,25 +174,43 @@ namespace Project_3
             rootNode.Expand();
         }
 
+        /// <summary>
+        /// Adds one level of children to the given node.
+        /// </summary>
+        /// <param name="node"></param>
         public static void AddChildren(TreeNode node)
         {
+            if (node.Nodes.Count == 0) { return; }
 
-            if (node.Nodes[0].Text != "DUMMY") 
-            {
-                return; 
-            }
+            if (node.Nodes[0].Text != "DUMMY") { return; }
+
+            if (node.Tag == null) { return; }
 
             node.Nodes.Clear();
 
+
             string path = node.Tag.ToString();
 
-            string[] directories = Directory.GetDirectories(path);
-            string[] files = Directory.GetFiles(path);
+            string[] directories;
+            string[] files;
+
+            try
+            {
+                directories = Directory.GetDirectories(path);
+                files = Directory.GetFiles(path);
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                MessageBox.Show(e.Message);
+                return;
+            }
 
             foreach (string directory in directories)
             {
                 TreeNode newNode = new TreeNode(Path.GetFileName(directory));
-                newNode.Tag = directory;
+                newNode.Tag = directory; 
+                newNode.ImageKey = "folder";
+                newNode.SelectedImageKey = "folder";
 
                 node.Nodes.Add(newNode);
 
@@ -189,6 +235,8 @@ namespace Project_3
             {
                 TreeNode newNode = new TreeNode(Path.GetFileName(file));
                 newNode.Tag = file;
+                newNode.ImageKey = "file";
+                newNode.SelectedImageKey = "file";
 
                 node.Nodes.Add(newNode);
             }
@@ -202,23 +250,31 @@ namespace Project_3
         {
             string path;
 
-            // Store path
-            if (node.Tag.ToString != null)
+            // Validate and store path
+            if (node.Tag == null) { return; }
+
+            else {  path = node.Tag.ToString(); }
+
+            string[] directories;
+            string[] files;
+
+            try
             {
-                path = node.Tag.ToString();
+                directories = Directory.GetDirectories(path);
+                files = Directory.GetFiles(path);
             }
-            else
+            catch (UnauthorizedAccessException e)
             {
+                MessageBox.Show(e.Message);
                 return;
             }
-
-            string[] directories = Directory.GetDirectories(path);
-            string[] files = Directory.GetFiles(path);
 
             foreach (string directory in directories)
             {
                 TreeNode newNode = new TreeNode(Path.GetFileName(directory));
                 newNode.Tag = directory;
+                newNode.ImageKey = "folder";
+                newNode.SelectedImageKey = "folder";
 
                 node.Nodes.Add(newNode);
 
@@ -243,64 +299,22 @@ namespace Project_3
             {
                 TreeNode newNode = new TreeNode(Path.GetFileName(file));
                 newNode.Tag = file;
+                newNode.ImageKey = "file";
+                newNode.SelectedImageKey = "file";
 
                 node.Nodes.Add(newNode);
             }
-            /*
-            // Declare enumerable
-            IEnumerable<string> files;
-
-            try
-            {
-                files = Directory.EnumerateFiles(path);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return;
-            }
-
-            foreach (string file in files)
-            {
-                if (File.Exists(file))
-                {
-                    TreeNode fileNode = new TreeNode(Path.GetFileName(file));
-
-                    fileNode.Tag = file;
-
-                    node.Nodes.Add(fileNode);
-                }
-            }
-
-            IEnumerable<string> folders;
-            try
-            {
-                folders = Directory.EnumerateDirectories(path);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return;
-            }
-
-            foreach (string folder in folders)
-            {
-                TreeNode newNode = new TreeNode(Path.GetFileName(folder));
-
-                newNode.Tag = folder;
-
-                node.Nodes.Add(newNode);
-
-                RecursiveAddDirectories(newNode);
-            }
-            */
         }
 
         /// <summary>
-        /// Returns the path to the parent directory of the root node
+        /// Gets the parent directory of the TreeView root node
         /// </summary>
         /// <param name="tvDir"></param>
-        /// <returns>string</returns>
+        /// <returns>Returns the path to the parent directory of the root node</returns>
         public static string GetParentDirectory(TreeView tvDir)
         {
+            if (tvDir.Nodes.Count == 0 || tvDir.Nodes[0].Tag == null) { return null; }
+
             string currentDir = tvDir.Nodes[0].Tag.ToString();
 
             try
@@ -316,8 +330,16 @@ namespace Project_3
             return null;
         }
 
+        /// <summary>
+        /// Searches children of node and returns first sub directory found
+        /// </summary>
+        /// <param name="tvDir"></param>
+        /// <param name="index"></param>
+        /// <returns>Path of first sub directory found</returns>
         public static string GetFirstSubDirectory(TreeView tvDir, int index)
         {
+            if (index >= tvDir.Nodes.Count) { return null; }
+
             TreeNode node;
             try
             {
@@ -332,18 +354,20 @@ namespace Project_3
 
             foreach (TreeNode child in node.Nodes)
             {
-                if (Directory.Exists(child.Tag.ToString()))
+                if (child.Tag != null && Directory.Exists(child.Tag.ToString()))
                 {
                     return child.Tag.ToString();
                 }
             }
 
-            GetFirstSubDirectory(tvDir, ++index);
-
-
-            return null;
+            return GetFirstSubDirectory(tvDir, ++index);
         }
 
+        /// <summary>
+        /// Gets the full path of the directory containing the given path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns>Fullpath of the directory the given path is located</returns>
         public static string GetCurrentDirectory(string path)
         {
             try
@@ -380,7 +404,7 @@ namespace Project_3
 
             // Exclude common non-text files
             if (ext == ".exe" || ext == ".png" || ext == ".jpg" || ext == ".dll" || ext == ".zip" ||
-                ext == ".pdf" || ext == ".mp4" || ext == ".pdb" || ext == ".docx" || ext == "xlsx")
+                ext == ".pdf" || ext == ".mp4" || ext == ".pdb" || ext == ".docx" || ext == ".xlsx")
             {
                 return false;
             }
@@ -432,6 +456,8 @@ namespace Project_3
         /// <param name="path"></param>
         public static void DisplayFileProperties(ListBox lb, string path)
         {
+            if (!File.Exists(path)) { return; }
+
             var fileInfo = new FileInfo(path);
             float fileSize = fileInfo.Length;
             string unitType = "bytes";
@@ -461,6 +487,8 @@ namespace Project_3
         /// <param name="path"></param>
         public static void WriteFile(string text, TreeNode node)
         {
+            if (node.Tag == null) return;
+
             string path = node.Tag.ToString();
             try
             {
@@ -492,6 +520,13 @@ namespace Project_3
             }
         }
 
+        /// <summary>
+        /// Creates file with and TreeNode using give path
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="directoryPath"></param>
+        /// <param name="nodes"></param>
+        /// <returns>TreeNode containing the name and fullpath of the created file</returns>
         public static TreeNode CreateFile(string fileName, string directoryPath, TreeNodeCollection nodes)
         {
             // Give file .txt extension if it doesn't have a . ending
@@ -516,12 +551,15 @@ namespace Project_3
 
                         using (File.Create(filePath)) ;
 
+                        TreeNode newNode = FindNode(nodes, filePath);
+                        newNode.ImageKey = "file";
+                        newNode.SelectedImageKey = "file";
                         return FindNode(nodes, filePath);                      
                     }
                 }
 
                 // Check if current path is a valid directory
-                else if (Directory.Exists(directoryPath) || Directory.Exists(directoryPath + "'\'"))
+                else if (Directory.Exists(directoryPath))
                 {
                     filePath = Path.Combine(directoryPath, fileName);
 
@@ -534,6 +572,8 @@ namespace Project_3
                     {
                         TreeNode newNode = dirNode.Nodes.Add(fileName);
                         newNode.Tag = filePath;
+                        newNode.ImageKey = "file";
+                        newNode.SelectedImageKey = "file";
                         return newNode;
                     }                    
                 }
@@ -554,6 +594,13 @@ namespace Project_3
             return null;
         }
 
+        /// <summary>
+        /// Creates a directory and TreeNode using the given path
+        /// </summary>
+        /// <param name="directoryName"></param>
+        /// <param name="directoryPath"></param>
+        /// <param name="nodes"></param>
+        /// <returns>TreeNode containing the directory name and fullpath of the created directory</returns>
         public static TreeNode CreateDirectory(string directoryName, string directoryPath, TreeNodeCollection nodes)
         {
             string newdirectoryPath;
@@ -563,7 +610,7 @@ namespace Project_3
             try
             {            
                 // Check if current path is a valid directory
-                if (Directory.Exists(directoryPath) || Directory.Exists(directoryPath + "'\'"))
+                if (Directory.Exists(directoryPath))
                 {
                     newdirectoryPath = Path.Combine(directoryPath, directoryName);
 
@@ -575,6 +622,8 @@ namespace Project_3
                     {
                         TreeNode newNode = dirNode.Nodes.Add(directoryName);
                         newNode.Tag = newdirectoryPath;
+                        newNode.ImageKey = "folder";
+                        newNode.SelectedImageKey = "folder";
                         return newNode;
                     }
                 }
@@ -595,8 +644,14 @@ namespace Project_3
             return null;
         }
 
+        /// <summary>
+        /// Deletes the file or directory at the full path given the the TreeNode Tag
+        /// If path leads to a directory, attempt to recursively delete all contained files and directories
+        /// </summary>
+        /// <param name="node"></param>
         public static void DeleteFile(TreeNode node)
         {
+            if (node.Tag == null) return;
             string path = node.Tag.ToString();
             int fails = 0;
 
@@ -612,109 +667,174 @@ namespace Project_3
                     {
                         File.Delete(path);
                         node.Remove();
+                        return;
                     }
                     catch (UnauthorizedAccessException e)
                     {
-                        fails++;
                         MessageBox.Show(e.Message);
+                        return;
                     }
                 }
                 else { return; }
             }
             else if (Directory.Exists(path))
             {
-                string[] files = Directory.GetFiles(path);
-                string[] subDir = Directory.GetDirectories(path);
+                fails = RecursiveDelete(node);                
+            }
 
-                foreach (string file in files)
+            if (fails > 0)
+            {
+                MessageBox.Show($"Could not delete {node.Text}, {fails} files/directories inside could not be deleted");
+            }
+        }
+
+        /// <summary>
+        /// Recursively delete all files and directories at the full path of the given node, then delete the node.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns>Number of files and directories which were unable to be deleted</returns>
+        private static int RecursiveDelete(TreeNode node)
+        {
+            int fails = 0;
+
+            if (node.Nodes.Count == 0)
+            {
+                if (node.Tag != null && File.Exists(node.Tag.ToString()))
                 {
                     try
                     {
-                        File.Delete(file);
+                        File.Delete(node.Tag.ToString());
                         node.Remove();
-                    }
-                    catch (UnauthorizedAccessException e)
-                    {
-                        fails++;
-                        MessageBox.Show(e.Message);
-                    }
-                }
-                foreach (string dir in subDir)
-                {
-                    fails += RecursiveDelete(dir);
-                }
-
-                if (fails == 0)
-                {
-                    try
-                    {
-                        Directory.Delete(path);
-                    }
-                    catch (IOException io)
-                    {
-                        MessageBox.Show(io.Message);
+                        return fails;
                     }
                     catch (UnauthorizedAccessException e)
                     {
                         MessageBox.Show(e.Message);
+                        return ++fails;
+                    }
+                    catch (IOException e)
+                    {
+                        MessageBox.Show(e.Message);
+                        return ++fails;
                     }
                 }
                 else
                 {
-                    MessageBox.Show("Directory contains multiple files that cannot be deleted");
+                    if (node.Tag != null && Directory.Exists(node.Tag.ToString()))
+                    {
+                        try
+                        {
+                            Directory.Delete(node.Tag.ToString());
+                            node.Remove();
+                            return fails;
+                        }
+                        catch (UnauthorizedAccessException e)
+                        {
+                            MessageBox.Show(e.Message);
+                            return ++fails;
+                        }
+                        catch (IOException e)
+                        {
+                            MessageBox.Show(e.Message);
+                            return ++fails;
+                        }
+                    }
+                }
+
+            }
+            else
+            {
+                if (node.Tag != null && Directory.Exists(node.Tag.ToString()) && node.Nodes.Count == 1 
+                    && node.Nodes[0].Text.Equals("DUMMY"))
+                {
+                    AddChildren(node);
+                }
+                for (int i = node.Nodes.Count - 1; i >= 0; i--)
+                {
+                    if (node.Nodes[i].Tag == null)
+                    {
+                        fails++;
+                        continue;
+                    }
+                    string path = node.Nodes[i].Tag.ToString();
+                    if (File.Exists(path))
+                    {
+                        try
+                        {
+                            File.Delete(path);
+                            node.Nodes[i].Remove();
+                        }
+                        catch (UnauthorizedAccessException e)
+                        {
+                            MessageBox.Show(e.Message);
+                            ++fails;
+                        }
+                        catch (IOException e)
+                        {
+                            MessageBox.Show(e.Message);
+                            ++fails;
+                        }
+                    }
+                    else if (Directory.Exists(path) && node.Nodes[i].Nodes.Count == 1 && node.Nodes[i].Nodes[0].Text.Equals("DUMMY"))
+                    {
+                        AddChildren(node.Nodes[i]);
+                        fails += RecursiveDelete(node.Nodes[i]);
+                    }
+                    else
+                    {
+                        if (Directory.Exists(path))
+                        {
+                            try
+                            {
+                                Directory.Delete(path);
+                                node.Nodes[i].Remove();
+                            }
+                            catch (UnauthorizedAccessException e)
+                            {
+                                MessageBox.Show(e.Message);
+                                return ++fails;
+                            }
+                            catch (IOException e)
+                            {
+                                MessageBox.Show(e.Message);
+                                return ++fails;
+                            }
+                        }
+                    }
                 }
             }
-        }
-
-        private static int RecursiveDelete(string path)
-        {
 
             try
             {
-                Directory.Delete(path, true);
-                return 0;
+                if (node.Tag == null) { return ++fails; }
+                Directory.Delete(node.Tag.ToString());
+                node.Remove();
             }
-            catch (Exception e)
+            catch (UnauthorizedAccessException e)
             {
                 MessageBox.Show(e.Message);
-                return 1;
+                ++fails;
             }
-            /*
-            int fails = 0;
-            string[] files = Directory.GetFiles(path);
-            string[] subDir = Directory.GetDirectories(path);
-
-            foreach (string file in files)
+            catch (IOException e)
             {
-                try
-                {
-                    File.Delete(file);
-                }
-                catch (UnauthorizedAccessException e)
-                {
-                    fails++;
-                    MessageBox.Show(e.Message);
-                }
-            }
-
-            foreach (string dir in subDir)
-            {
-                fails += RecursiveDelete(dir);
-                if (fails == 0)
-                {
-                    Directory.Delete(dir);
-                }
+                MessageBox.Show(e.Message);
+                ++fails;
             }
 
             return fails;
-            */
         }
 
+        /// <summary>
+        /// Searches one level of TreeNodes for matching file path
+        /// </summary>
+        /// <param name="nodes"></param>
+        /// <param name="filePath"></param>
+        /// <returns>TreeNode with Tag that matches given filepath</returns>
         public static TreeNode UpdateSelectedNode(TreeNodeCollection nodes, string filePath)
         {
             foreach (TreeNode node in nodes)
             {
-                if (node.Tag.ToString().Equals(filePath))
+                if (node.Tag != null && node.Tag.ToString().Equals(filePath))
                 {
                     return node;
                 }
@@ -722,6 +842,12 @@ namespace Project_3
             return null;
         }
 
+        /// <summary>
+        /// Recursively search all files and subdirectories of the given node for a node containing the matching path
+        /// </summary>
+        /// <param name="nodes"></param>
+        /// <param name="path"></param>
+        /// <returns>TreeNode with Tag that matches the given path</returns>
         public static TreeNode FindNode(TreeNodeCollection nodes, string path)
         {
             foreach (TreeNode node in nodes)

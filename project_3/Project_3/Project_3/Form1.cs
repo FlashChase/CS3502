@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows.Forms;
 
 namespace Project_3
@@ -96,8 +97,10 @@ namespace Project_3
             }
             else if (Directory.Exists(path))
             {
+                btnReadFile.Visible = false;
                 currentDirectoryNode = tvDir.SelectedNode;
                 ShowControl(lstFileInfo);
+                
             }
         }
 
@@ -108,11 +111,12 @@ namespace Project_3
 
         private void ReadFile(TreeNode node)
         {
-            string? file = tvDir.SelectedNode.Tag as string;
+            string? file = node.Tag as string;
 
             if (string.IsNullOrEmpty(file))
             {
                 MessageBox.Show("Error: Invalid file path.\nbtnReadFile_Click.");
+                return;
             }
             if (!File.Exists(file))
             {
@@ -281,6 +285,7 @@ namespace Project_3
                     Label typeLabel = new Label();
                     typeLabel.DoubleClick += lblSearchResults_DoubleClick;
                     typeLabel.Text = Path.GetFileNameWithoutExtension(searchResults[row - 1].Parent.Tag.ToString());
+                    typeLabel.Tag = searchResults[row - 1].Tag.ToString();
                     typeLabel.AutoSize = false;
                     typeLabel.Dock = DockStyle.Fill;
                     typeLabel.TextAlign = ContentAlignment.MiddleLeft;
@@ -292,25 +297,25 @@ namespace Project_3
 
         private void lblSearchResults_DoubleClick(object sender, EventArgs e)
         {
-            ShowControl(rtbFileText);
-
-            Label label = (Label)sender;
-
-            rtbFileText.Text = FileOps.ReadFile(label.Tag.ToString());
-
-            if (rtbFileText.Text == null)
-            {
-                return;
-            }
+            Label label = (Label)sender;           
 
             this.AcceptButton = btnEdit;
 
             TreeNode node = FileOps.FindNode(tvDir.Nodes, label.Tag.ToString());
 
             tvDir.SelectedNode = node;
+            node.EnsureVisible();
             tvDir.Focus();
 
-            btnReadFile.Visible = false;
+            if (File.Exists(node.Tag.ToString()))
+            {
+                ReadFile(node);
+                btnReadFile.Visible = false;
+            }
+            else if (Directory.Exists(node.Tag.ToString()))
+            {
+                ShowControl(lstFileInfo);
+            }
         }
 
         private void txtSearch_KeyDown(object sender, KeyEventArgs e)
@@ -339,6 +344,7 @@ namespace Project_3
             }
 
             lblNewFileName.Text = "New Filename:";
+            btnCreateAndOpen.Text = "Create and open file";
             ShowControl(pnlCreate);
 
             txtNewFileName.Focus();
@@ -357,6 +363,7 @@ namespace Project_3
             }
 
             lblNewFileName.Text = "New Folder Name:";
+            btnCreateAndOpen.Text = "Create and open folder";
             ShowControl(pnlCreate);
 
             txtNewFileName.Focus();
@@ -367,7 +374,7 @@ namespace Project_3
 
         private void btnCreateAndOpen_Click(object sender, EventArgs e)
         {
-            if (lblNewFileName.Text.Contains("File"))
+            if (btnCreateAndOpen.Text.Contains("file"))
             {
                 // Store contents of filename textbox
                 string fileName = txtNewFileName.Text;
